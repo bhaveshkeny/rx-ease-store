@@ -105,7 +105,7 @@ backend/
   requirements.txt
   app/
     main.py        FastAPI app, CORS, startup (create tables + seed)
-    database.py    SQLite engine + session dependency
+    database.py    Snowflake engine + session dependency
     models.py      users, medicines, orders, order_items
     schemas.py     Pydantic request/response models
     auth.py        password hashing, JWT, current-user dependencies

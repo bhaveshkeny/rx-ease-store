@@ -9,7 +9,7 @@ from .seed import seed_medicines
 
 app = FastAPI(
     title="MediCare Pharmacy API",
-    description="FastAPI + SQLite backend for the MediCare pharmacy storefront.",
+    description="FastAPI + Snowflake backend for the MediCare pharmacy storefront.",
     version="1.0.0",
 )
 
