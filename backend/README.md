@@ -1,9 +1,34 @@
-# MediCare Pharmacy — Backend (Python FastAPI + SQLite)
+# MediCare Pharmacy — Backend (Python FastAPI + Snowflake)
 
 Standalone FastAPI service that mirrors the storefront's backend: accounts, medicine
 catalogue, orders, prescription uploads and a pharmacist verification queue.
+Data lives in Snowflake via SQLAlchemy (`snowflake-sqlalchemy`).
 
-## Run locally
+## 1. Prepare Snowflake
+
+Run `snowflake_setup.sql` in a worksheet to create the warehouse, database and schema
+(and grant your app role access). Tables are created automatically on first boot.
+
+## 2. Configure credentials
+
+```sh
+export SNOWFLAKE_ACCOUNT=ab12345.eu-west-1   # account identifier
+export SNOWFLAKE_USER=pharmacy_app
+export SNOWFLAKE_PASSWORD=•••••
+export SNOWFLAKE_DATABASE=PHARMACY
+export SNOWFLAKE_SCHEMA=PUBLIC
+export SNOWFLAKE_WAREHOUSE=COMPUTE_WH
+export SNOWFLAKE_ROLE=SYSADMIN               # optional
+export SECRET_KEY=change-me                  # JWT signing
+export CORS_ORIGINS=http://localhost:5173
+```
+
+Alternatively set a single `SNOWFLAKE_URL`:
+`snowflake://user:pass@account/PHARMACY/PUBLIC?warehouse=COMPUTE_WH&role=SYSADMIN`
+(URL-encode special characters in the password). For key-pair auth, pass
+`connect_args={"private_key": ...}` in `app/database.py`.
+
+## 3. Run locally
 
 ```sh
 cd backend
@@ -14,10 +39,13 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 - API docs: http://localhost:8000/docs
-- SQLite file `pharmacy.db` is created on first boot and seeded with 18 medicines.
-- Prescription files are stored under `backend/uploads/prescriptions/<user_id>/`.
+- On first boot the tables are created in `PHARMACY.PUBLIC` and seeded with 18 medicines.
+- Prescription files are stored on disk under `backend/uploads/prescriptions/<user_id>/`
+  (Snowflake stores only the relative path; swap in a stage/S3 for production).
 
-Set `SECRET_KEY` (JWT signing) and `CORS_ORIGINS` as environment variables in production.
+Notes for Snowflake: indexes are not used (Snowflake has none), keys/constraints are
+declared but not enforced, and the warehouse auto-suspends when idle.
+
 
 ## Endpoints
 
