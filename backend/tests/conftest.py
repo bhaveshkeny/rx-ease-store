@@ -1,6 +1,8 @@
 """Pytest fixtures.
 
-Tests use an in-memory SQLite database configured via SQLAlchemy.
+The app is normally wired to Snowflake. For tests we point SQLAlchemy at an
+in-memory SQLite database *before* the app package is imported, so no Snowflake
+account or network access is required.
 """
 import os
 import sys
@@ -16,6 +18,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 # Must be set before app.database is imported (it builds the URL at import time).
+os.environ.setdefault("SNOWFLAKE_URL", "sqlite+pysqlite:///:memory:")
 os.environ.setdefault("SECRET_KEY", "test-secret")
 
 from app import database  # noqa: E402
@@ -28,7 +31,7 @@ test_engine = create_engine(
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 # Redirect the app's engine/session factory to the test database. Done before
-# importing app.main/app.seed so the startup hook seeds SQLite.
+# importing app.main/app.seed so the startup hook seeds SQLite, not Snowflake.
 database.engine = test_engine
 database.SessionLocal = TestingSessionLocal
 

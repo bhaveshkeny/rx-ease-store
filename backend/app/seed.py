@@ -1,9 +1,7 @@
 from sqlalchemy import select
 
 from .database import SessionLocal
-from .models import Medicine, User
-from datetime import datetime
-import uuid
+from .models import Medicine
 
 MEDICINES = [
     # OTC
@@ -47,63 +45,6 @@ def seed_medicines() -> None:
                 stock=stock,
             )
             for name, brand, category, description, price, pack_size, rx, stock in MEDICINES
-        )
-        db.commit()
-    finally:
-        db.close()
-
-
-# Helper for generating UUIDs
-def new_id():
-    return str(uuid.uuid4())
-
-test_users = [
-    {
-        "id": new_id(),
-        "email": "alice@example.com",
-        "hashed_password": "$2b$12$abc123hashedpasswordexample",  # fake bcrypt hash
-        "full_name": "Alice Johnson",
-        "phone": "9876543210",
-        "is_pharmacist": True,
-        "created_at": datetime.utcnow(),
-    },
-    {
-        "id": new_id(),
-        "email": "bob@example.com",
-        "hashed_password": "$2b$12$xyz456hashedpasswordexample",
-        "full_name": "Bob Kumar",
-        "phone": "9123456789",
-        "is_pharmacist": False,
-        "created_at": datetime.utcnow(),
-    },
-    {
-        "id": new_id(),
-        "email": "charlie@example.com",
-        "hashed_password": "$2b$12$def789hashedpasswordexample",
-        "full_name": "Charlie Singh",
-        "phone": None,
-        "is_pharmacist": False,
-        "created_at": datetime.utcnow(),
-    }
-]
-
-def seed_users() -> None:
-    """Insert the starter catalogue once, on first boot."""
-    db = SessionLocal()
-    try:
-        if db.scalar(select(User).limit(1)):
-            return
-        db.add_all(
-            User(
-                id=user_data["id"],
-                email=user_data["email"],
-                hashed_password=user_data["hashed_password"],
-                full_name=user_data["full_name"],
-                phone=user_data["phone"],
-                is_pharmacist=user_data["is_pharmacist"],
-                created_at=user_data["created_at"],
-            )
-            for user_data in test_users
         )
         db.commit()
     finally:
