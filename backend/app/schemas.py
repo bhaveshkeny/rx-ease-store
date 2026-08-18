@@ -35,6 +35,7 @@ class UserCreate(BaseModel):
     password: str
     full_name: str | None = None
     phone: str | None = None
+    is_pharmacist: bool = False
 
 
 class UserOut(BaseModel):
