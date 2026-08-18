@@ -5,11 +5,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
 from .routers import auth_routes, medicines, orders
-from .seed import seed_medicines, seed_users
+from .seed import seed_medicines
 
 app = FastAPI(
     title="MediCare Pharmacy API",
-    description="FastAPI + SQLite backend for the MediCare pharmacy storefront.",
+    description="FastAPI + Snowflake backend for the MediCare pharmacy storefront.",
     version="1.0.0",
 )
 
@@ -31,7 +31,6 @@ app.include_router(orders.router)
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     seed_medicines()
-    seed_users()  # Call the function to seed users on startup
 
 
 @app.get("/api/health", tags=["health"])
