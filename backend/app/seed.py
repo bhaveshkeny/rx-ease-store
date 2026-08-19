@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import select
 
 from .database import SessionLocal
-from .models import Medicine
+from .models import Medicine, User
 
 MEDICINES = [
     # OTC
