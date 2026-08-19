@@ -1,9 +1,7 @@
 from sqlalchemy import select
 
 from .database import SessionLocal
-from .models import Medicine, User
-from datetime import datetime
-import uuid
+from .models import Medicine
 
 MEDICINES = [
     # OTC

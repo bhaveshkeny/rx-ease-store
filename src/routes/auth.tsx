@@ -70,7 +70,7 @@ function AuthPage() {
       toast.error(error.message);
       return;
     }
-    if (!dataema.session) {
+    if (!data.session) {
       setPendingConfirm(true);
       toast.success("Check your email to confirm your account.");
     }
@@ -122,7 +122,7 @@ function AuthPage() {
                   <Label htmlFor="signin-email">Email</Label>
                   <Input
                     id="signin-email"
-                    type="text"
+                    type="email"
                     required
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
@@ -159,7 +159,7 @@ function AuthPage() {
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
-                    type="text"
+                    type="email"
                     required
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
