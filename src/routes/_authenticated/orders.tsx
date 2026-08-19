@@ -3,8 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { FileText, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/integrations/supabase/client";
 import { currency } from "@/lib/cart";
+import { apiClient } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/orders")({
   head: () => ({
@@ -32,14 +32,7 @@ const statusLabels: Record<string, string> = {
 function OrdersPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["orders"],
-    queryFn: async () => {
-      const { data: orders, error: ordersError } = await supabase
-        .from("orders")
-        .select("id, created_at, status, total, address, prescription_path, order_items(id, name, quantity, unit_price)")
-        .order("created_at", { ascending: false });
-      if (ordersError) throw ordersError;
-      return orders ?? [];
-    },
+    queryFn: apiClient.orders.list,
   });
 
   return (
@@ -81,7 +74,7 @@ function OrdersPage() {
             </div>
 
             <ul className="mt-4 space-y-1.5 text-sm">
-              {order.order_items?.map((item) => (
+              {order.items?.map((item) => (
                 <li key={item.id} className="flex justify-between gap-3">
                   <span className="text-muted-foreground">
                     {item.name} × {item.quantity}

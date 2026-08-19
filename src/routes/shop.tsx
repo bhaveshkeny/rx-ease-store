@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Search, ShoppingBag, Pill, Filter as FilterIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MedicineCard } from "@/components/MedicineCard";
@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { medicinesQuery } from "@/lib/medicines";
 
 export const Route = createFileRoute("/shop")({
+  loader: ({ context }) => context.queryClient.prefetchQuery(medicinesQuery),
   head: () => ({
     meta: [
       { title: "Shop Medicines — RxEase Pharmacy" },
@@ -29,7 +30,7 @@ type TypeFilter = "all" | "otc" | "rx";
 type SortBy = "relevance" | "price-low" | "price-high" | "name";
 
 function ShopPage() {
-  const { data: medicines } = useSuspenseQuery(medicinesQuery);
+  const { data: medicines = [], isLoading, error } = useQuery(medicinesQuery);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [type, setType] = useState<TypeFilter>("all");
@@ -79,6 +80,21 @@ function ShopPage() {
     { label: "OTC Products", value: medicines.filter(m => !m.requires_prescription).length },
     { label: "Prescription Items", value: medicines.filter(m => m.requires_prescription).length },
   ];
+
+  if (isLoading) {
+    return <div className="mx-auto max-w-7xl px-4 py-20 text-center text-muted-foreground">Loading medicines...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+        <h1 className="text-2xl font-semibold">Medicine catalogue unavailable</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Start the backend service and refresh this page to load the catalogue.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">

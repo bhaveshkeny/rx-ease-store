@@ -1,13 +1,15 @@
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import { useAuth } from "@/hooks/useAuth";
+import { apiErrorMessage } from "@/lib/api";
+import { useAuthStore } from "@/stores/authStore";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -31,65 +33,21 @@ function AuthPage() {
   const navigate = useNavigate();
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [busy, setBusy] = useState(false);
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
   const [pendingConfirm, setPendingConfirm] = useState(false);
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/orders" });
   }, [loading, user, navigate]);
 
-  const handleSignIn = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    router.invalidate();
-    navigate({ to: "/orders" });
-  };
-
-  const handleSignUp = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setBusy(true);
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: window.location.origin,
-        data: { full_name: fullName },
-      },
-    });
-    setBusy(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    if (!data.session) {
-      setPendingConfirm(true);
-      toast.success("Check your email to confirm your account.");
-    }
-  };
-
-  const handleGoogle = async () => {
-    setBusy(true);
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setBusy(false);
-      toast.error("Google sign-in failed. Please try again.");
-      return;
-    }
-    if (result.redirected) return;
-    router.invalidate();
-    navigate({ to: "/orders" });
-  };
+  const signInSchema = Yup.object({
+    email: Yup.string().email("Enter a valid email").required("Email is required"),
+    password: Yup.string().required("Password is required"),
+  });
+  const signUpSchema = signInSchema.shape({
+    fullName: Yup.string().min(2, "Enter your full name").required("Full name is required"),
+    password: Yup.string().min(6, "Use at least 6 characters").required("Password is required"),
+  });
 
   return (
     <div className="mx-auto max-w-md px-4 py-14">
@@ -117,80 +75,82 @@ function AuthPage() {
             </TabsList>
 
             <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="mt-4 space-y-4">
+              <Formik
+                initialValues={{ email: "", password: "" }}
+                validationSchema={signInSchema}
+                onSubmit={async (values, { setSubmitting }) => {
+                  try {
+                    await useAuthStore.getState().signIn(values.email, values.password);
+                    router.invalidate();
+                    navigate({ to: "/orders" });
+                  } catch (error) {
+                    toast.error(apiErrorMessage(error));
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+              >
+                {({ isSubmitting }) => (
+              <Form className="mt-4 space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                  />
+                  <Field as={Input} id="signin-email" name="email" type="email" />
+                  <ErrorMessage name="email" component="p" className="text-xs text-destructive" />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="signin-password">Password</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    required
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                  />
+                  <Field as={Input} id="signin-password" name="password" type="password" />
+                  <ErrorMessage name="password" component="p" className="text-xs text-destructive" />
                 </div>
-                <Button type="submit" className="w-full" disabled={busy}>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
                   Sign in
                 </Button>
-              </form>
+              </Form>
+                )}
+              </Formik>
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="mt-4 space-y-4">
+              <Formik
+                initialValues={{ fullName: "", email: "", password: "" }}
+                validationSchema={signUpSchema}
+                onSubmit={async (values, { setSubmitting }) => {
+                  try {
+                    await useAuthStore.getState().signUp(values);
+                    setEmail(values.email);
+                    setPendingConfirm(true);
+                    toast.success("Your account is ready. Welcome to MediCare.");
+                  } catch (error) {
+                    toast.error(apiErrorMessage(error));
+                  } finally {
+                    setSubmitting(false);
+                  }
+                }}
+              >
+                {({ isSubmitting }) => (
+              <Form className="mt-4 space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="signup-name">Full name</Label>
-                  <Input
-                    id="signup-name"
-                    required
-                    value={fullName}
-                    onChange={(event) => setFullName(event.target.value)}
-                  />
+                  <Field as={Input} id="signup-name" name="fullName" />
+                  <ErrorMessage name="fullName" component="p" className="text-xs text-destructive" />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="signup-email">Email</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                  />
+                  <Field as={Input} id="signup-email" name="email" type="email" />
+                  <ErrorMessage name="email" component="p" className="text-xs text-destructive" />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="signup-password">Password</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    required
-                    minLength={6}
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                  />
+                  <Field as={Input} id="signup-password" name="password" type="password" />
+                  <ErrorMessage name="password" component="p" className="text-xs text-destructive" />
                 </div>
-                <Button type="submit" className="w-full" disabled={busy}>
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
                   Create account
                 </Button>
-              </form>
+              </Form>
+                )}
+              </Formik>
             </TabsContent>
-
-            <div className="mt-5">
-              <div className="relative text-center text-xs text-muted-foreground">
-                <span className="relative z-10 bg-card px-2">or</span>
-                <span className="absolute left-0 top-1/2 h-px w-full bg-border" />
-              </div>
-              <Button variant="outline" className="mt-4 w-full" onClick={handleGoogle} disabled={busy}>
-                Continue with Google
-              </Button>
-            </div>
           </Tabs>
         )}
       </div>

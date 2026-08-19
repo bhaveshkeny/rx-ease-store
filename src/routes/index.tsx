@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Clock, FileCheck2, ShieldCheck, Truck } from "lucide-react";
 import heroImage from "@/assets/pharmacy-hero.jpg";
 import { MedicineCard } from "@/components/MedicineCard";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { medicinesQuery } from "@/lib/medicines";
 
 export const Route = createFileRoute("/")({
+  loader: ({ context }) => context.queryClient.prefetchQuery(medicinesQuery),
   head: () => ({
     meta: [
       { title: "MediCare Pharmacy — Prescription & OTC Medicines Online" },
@@ -34,7 +35,23 @@ const perks = [
 ];
 
 function HomePage() {
-  const { data: medicines } = useSuspenseQuery(medicinesQuery);
+  const { data: medicines = [], isLoading, error } = useQuery(medicinesQuery);
+
+  if (isLoading) {
+    return <div className="mx-auto max-w-6xl px-4 py-20 text-center text-muted-foreground">Loading medicines...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-20 text-center">
+        <h1 className="text-2xl font-semibold">Medicine catalogue unavailable</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Start the backend service and refresh this page to load the catalogue.
+        </p>
+      </div>
+    );
+  }
+
   const featured = medicines.slice(0, 6);
 
   return (

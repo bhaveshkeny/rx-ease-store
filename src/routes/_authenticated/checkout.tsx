@@ -1,13 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Formik, Form, Field, ErrorMessage } from "formik";
+import * as Yup from "yup";
 import { toast } from "sonner";
 import { FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { supabase } from "@/integrations/supabase/client";
 import { currency, useCart } from "@/lib/cart";
+import { apiClient, apiErrorMessage } from "@/lib/api";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   head: () => ({
@@ -28,76 +30,18 @@ export const Route = createFileRoute("/_authenticated/checkout")({
 });
 
 function CheckoutPage() {
-  const { user } = Route.useRouteContext();
   const { items, subtotal, needsPrescription, clear } = useCart();
   const navigate = useNavigate();
-  const [fullName, setFullName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [address, setAddress] = useState("");
   const [file, setFile] = useState<File | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
   const delivery = subtotal > 0 && subtotal < 30 ? 3.99 : 0;
   const total = subtotal + delivery;
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (items.length === 0) {
-      toast.error("Your basket is empty.");
-      return;
-    }
-    if (needsPrescription && !file) {
-      toast.error("Please attach your prescription for the Rx items in your basket.");
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      let prescriptionPath: string | null = null;
-      if (file) {
-        const path = `${user.id}/${Date.now()}-${file.name.replace(/[^\w.\-]/g, "_")}`;
-        const { error: uploadError } = await supabase.storage
-          .from("prescriptions")
-          .upload(path, file, { upsert: false });
-        if (uploadError) throw uploadError;
-        prescriptionPath = path;
-      }
-
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
-        .insert({
-          user_id: user.id,
-          full_name: fullName,
-          phone,
-          address,
-          total,
-          status: needsPrescription ? "awaiting_verification" : "placed",
-          prescription_path: prescriptionPath,
-        })
-        .select("id")
-        .single();
-      if (orderError) throw orderError;
-
-      const { error: itemsError } = await supabase.from("order_items").insert(
-        items.map((item) => ({
-          order_id: order.id,
-          medicine_id: item.id,
-          name: item.name,
-          quantity: item.quantity,
-          unit_price: item.price,
-        })),
-      );
-      if (itemsError) throw itemsError;
-
-      clear();
-      toast.success("Order placed! Our pharmacy team will take it from here.");
-      navigate({ to: "/orders" });
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not place the order.");
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  const checkoutSchema = Yup.object({
+    fullName: Yup.string().min(2, "Enter your full name").required("Full name is required"),
+    phone: Yup.string().min(7, "Enter a valid phone number").required("Phone number is required"),
+    address: Yup.string().min(10, "Enter your complete delivery address").required("Address is required"),
+  });
 
   if (items.length === 0) {
     return (
@@ -118,25 +62,48 @@ function CheckoutPage() {
         Payment is not collected in this demo store — you pay on delivery.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <Formik
+        initialValues={{ fullName: "", phone: "", address: "" }}
+        validationSchema={checkoutSchema}
+        onSubmit={async (values, { setSubmitting }) => {
+          if (needsPrescription && !file) {
+            toast.error("Please attach your prescription for the Rx items in your basket.");
+            setSubmitting(false);
+            return;
+          }
+          try {
+            const order = await apiClient.orders.create({
+              ...values,
+              items: items.map((item) => ({ medicine_id: item.id, quantity: item.quantity })),
+            });
+            if (file) await apiClient.orders.uploadPrescription(order.id, file);
+            clear();
+            toast.success("Order placed! Our pharmacy team will take it from here.");
+            navigate({ to: "/orders" });
+          } catch (error) {
+            toast.error(apiErrorMessage(error));
+          } finally {
+            setSubmitting(false);
+          }
+        }}
+      >
+        {({ isSubmitting }) => (
+        <Form className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
         <div className="space-y-5 rounded-2xl border border-border bg-card p-6">
           <div className="space-y-1.5">
             <Label htmlFor="name">Full name</Label>
-            <Input id="name" required value={fullName} onChange={(e) => setFullName(e.target.value)} />
+            <Field as={Input} id="name" name="fullName" />
+            <ErrorMessage name="fullName" component="p" className="text-xs text-destructive" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="phone">Phone number</Label>
-            <Input id="phone" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+            <Field as={Input} id="phone" name="phone" />
+            <ErrorMessage name="phone" component="p" className="text-xs text-destructive" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="address">Delivery address</Label>
-            <Textarea
-              id="address"
-              required
-              rows={3}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
+            <Field as={Textarea} id="address" name="address" rows={3} />
+            <ErrorMessage name="address" component="p" className="text-xs text-destructive" />
           </div>
 
           <div className="space-y-1.5">
@@ -185,12 +152,14 @@ function CheckoutPage() {
               <dd>{currency(total)}</dd>
             </div>
           </dl>
-          <Button type="submit" size="lg" className="mt-5 w-full" disabled={submitting}>
-            {submitting && <Loader2 className="mr-2 size-4 animate-spin" />}
+          <Button type="submit" size="lg" className="mt-5 w-full" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 size-4 animate-spin" />}
             Place order
           </Button>
         </aside>
-      </form>
+        </Form>
+        )}
+      </Formik>
     </div>
   );
 }
