@@ -10,6 +10,7 @@ from ..schemas import MedicineCreate, MedicineOut
 router = APIRouter(prefix="/api/medicines", tags=["medicines"])
 
 
+
 @router.get("", response_model=list[MedicineOut])
 def list_medicines(
     search: str | None = Query(default=None),

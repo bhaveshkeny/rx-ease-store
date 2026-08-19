@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
 from .routers import auth_routes, medicines, orders
-from .seed import seed_medicines
+from .seed import seed_medicines,seed_users
 
 app = FastAPI(
     title="MediCare Pharmacy API",
