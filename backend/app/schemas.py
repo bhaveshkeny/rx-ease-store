@@ -53,6 +53,7 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
+
 class OrderItemIn(BaseModel):
     medicine_id: str
     quantity: int = 1

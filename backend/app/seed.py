@@ -57,6 +57,7 @@ def seed_medicines() -> None:
 def new_id():
     return str(uuid.uuid4())
 
+
 test_users = [
     {
         "id": new_id(),
