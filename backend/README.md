@@ -100,7 +100,10 @@ Backend:  CORS_ORIGINS=https://rx-ease.example.com
 ```
 
 The frontend origin must match the browser origin exactly, including `https://`,
-but must not include a path such as `/app`.
+but must not include a path such as `/app`. These variables are read at startup
+or build time, so restart the backend and redeploy the frontend after changing
+them. For preview domains, use an explicit `CORS_ORIGIN_REGEX` in the backend,
+such as `^https://.*\.lovable\.app$`.
 
 Login uses form encoding:
 

@@ -1,10 +1,8 @@
-import os
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
-from .config import CORS_ORIGINS
+from .config import CORS_ORIGIN_REGEX, CORS_ORIGINS
 from .routers import auth_routes, medicines, orders
 from .seed import seed_medicines,seed_users
 
@@ -14,10 +12,15 @@ app = FastAPI(
     version="1.0.0",
 )
 
-origins = CORS_ORIGINS.split(",")
+origins = [
+    origin.strip().rstrip("/")
+    for origin in CORS_ORIGINS.split(",")
+    if origin.strip()
+]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in origins if o.strip()],
+    allow_origins=origins,
+    allow_origin_regex=CORS_ORIGIN_REGEX or None,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

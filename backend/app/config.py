@@ -9,3 +9,4 @@ SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
 CORS_ORIGINS = os.getenv(
     "CORS_ORIGINS", "http://localhost:5173,http://localhost:8080"
 )
+CORS_ORIGIN_REGEX = os.getenv("CORS_ORIGIN_REGEX", "")
