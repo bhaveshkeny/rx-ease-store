@@ -31,6 +31,7 @@ app.include_router(orders.router)
 def on_startup() -> None:
     Base.metadata.create_all(bind=engine)
     seed_medicines()
+    seed_users()
 
 
 @app.get("/api/health", tags=["health"])
