@@ -20,6 +20,7 @@ export function SiteHeader() {
 
   const displayName =
     user?.full_name?.trim() || user?.email?.split("@")[0] || "My account";
+  const userInitial = displayName.charAt(0).toUpperCase();
 
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
@@ -69,9 +70,17 @@ export function SiteHeader() {
 
           {user ? (
             <div className="hidden items-center gap-2 md:flex">
-              <span className="max-w-[180px] truncate text-sm font-semibold text-foreground">
-                {displayName}
-              </span>
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground"
+                >
+                  {userInitial}
+                </span>
+                <span className="max-w-[180px] truncate text-sm font-semibold text-foreground">
+                  {displayName}
+                </span>
+              </div>
 
               <Button
                 variant="default"
@@ -111,9 +120,17 @@ export function SiteHeader() {
 
                 {user ? (
                   <div className="mt-4 flex flex-col gap-2">
-                    <span className="max-w-[220px] break-words text-sm font-semibold text-foreground">
-                      {displayName}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground"
+                      >
+                        {userInitial}
+                      </span>
+                      <span className="max-w-[220px] break-words text-sm font-semibold text-foreground">
+                        {displayName}
+                      </span>
+                    </div>
 
                     <Button
                       variant="default"
