@@ -1,34 +1,27 @@
-# MediCare Pharmacy — Backend (Python FastAPI + Snowflake)
+# MediCare Pharmacy — Backend (Python FastAPI + PostgreSQL)
 
 Standalone FastAPI service that mirrors the storefront's backend: accounts, medicine
 catalogue, orders, prescription uploads and a pharmacist verification queue.
-Data lives in Snowflake via SQLAlchemy (`snowflake-sqlalchemy`).
+Data lives in PostgreSQL via SQLAlchemy and the psycopg driver.
 
-## 1. Prepare Snowflake
+## 1. Prepare PostgreSQL
 
-Run `snowflake_setup.sql` in a worksheet to create the warehouse, database and schema
-(and grant your app role access). Tables are created automatically on first boot.
+Create a PostgreSQL database named `pharmacy`, or use a hosted PostgreSQL provider.
+The application creates its tables automatically on first boot.
 
 ## 2. Configure credentials
 
 ```sh
-export SNOWFLAKE_ACCOUNT=ab12345.eu-west-1   # account identifier
-export SNOWFLAKE_USER=pharmacy_app
-export SNOWFLAKE_PASSWORD=•••••
-export SNOWFLAKE_DATABASE=PHARMACY
-export SNOWFLAKE_SCHEMA=PUBLIC
-export SNOWFLAKE_WAREHOUSE=COMPUTE_WH
-export SNOWFLAKE_ROLE=SYSADMIN               # optional
+export DATABASE_URL=postgresql+psycopg://postgres:password@localhost:5432/pharmacy
 export SECRET_KEY=change-me                  # JWT signing
 # Add the exact deployed frontend origin here, separated by commas.
 # Example: https://rx-ease.example.com,http://localhost:5173
 export CORS_ORIGINS=https://rx-ease.example.com,http://localhost:5173
 ```
 
-Alternatively set a single `SNOWFLAKE_URL`:
-`snowflake://user:pass@account/PHARMACY/PUBLIC?warehouse=COMPUTE_WH&role=SYSADMIN`
-(URL-encode special characters in the password). For key-pair auth, pass
-`connect_args={"private_key": ...}` in `app/database.py`.
+For hosted PostgreSQL, set the provider's connection URL as `DATABASE_URL`.
+The app accepts `postgres://`, `postgresql://`, and `postgresql+psycopg://` URLs.
+URL-encode special characters in the username or password.
 
 ## 3. Run locally
 
@@ -41,12 +34,12 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 - API docs: http://localhost:8000/docs
-- On first boot the tables are created in `PHARMACY.PUBLIC` and seeded with 18 medicines.
-- Prescription files are stored on disk under `backend/uploads/prescriptions/<user_id>/`
-  (Snowflake stores only the relative path; swap in a stage/S3 for production).
+- On first boot the tables are created and seeded with 18 medicines.
+- Prescription files are stored on disk under `backend/uploads/prescriptions/<user_id>`.
+  Use persistent object storage for production deployments with ephemeral filesystems.
 
-Notes for Snowflake: indexes are not used (Snowflake has none), keys/constraints are
-declared but not enforced, and the warehouse auto-suspends when idle.
+For production, use your provider's private/internal PostgreSQL URL when the backend
+and database run in the same region.
 
 
 ## Endpoints
@@ -119,7 +112,7 @@ backend/
   requirements.txt
   app/
     main.py        FastAPI app, CORS, startup (create tables + seed)
-    database.py    Snowflake engine + session dependency
+    database.py    PostgreSQL engine + session dependency
     models.py      users, medicines, orders, order_items
     schemas.py     Pydantic request/response models
     auth.py        password hashing, JWT, current-user dependencies
