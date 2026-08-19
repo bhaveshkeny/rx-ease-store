@@ -41,15 +41,9 @@ export type Order = {
   items: OrderItem[];
 };
 
-const apiBaseUrl =
-  import.meta.env["VITE_API_URL"] ??
-  (import.meta.env.DEV ? "http://127.0.0.1:8000" : undefined);
-
-if (!apiBaseUrl) {
-  throw new Error("VITE_API_URL must be set in the frontend deployment environment.");
-}
-
-const api = axios.create({ baseURL: apiBaseUrl });
+const api = axios.create({
+  baseURL: import.meta.env["VITE_API_URL"] ?? "http://127.0.0.1:8000",
+});
 
 api.interceptors.request.use((config) => {
   const token =
