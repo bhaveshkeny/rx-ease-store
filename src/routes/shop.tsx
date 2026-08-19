@@ -1,25 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, ShoppingBag, Pill, Filter as FilterIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { MedicineCard } from "@/components/MedicineCard";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { medicinesQuery } from "@/lib/medicines";
 
 export const Route = createFileRoute("/shop")({
   head: () => ({
     meta: [
-      { title: "Shop Medicines — MediCare Pharmacy" },
+      { title: "Shop Medicines — RxEase Pharmacy" },
       {
         name: "description",
         content:
-          "Browse prescription and over-the-counter medicines by category: pain relief, allergy, antibiotics, diabetes care and more.",
+          "Browse prescription and over-the-counter medicines. Fast delivery, quality products, professional service. Find pain relief, allergy, antibiotics, diabetes care and more.",
       },
-      { property: "og:title", content: "Shop Medicines — MediCare Pharmacy" },
+      { property: "og:title", content: "Shop Medicines — RxEase Pharmacy" },
       {
         property: "og:description",
-        content: "Browse prescription and over-the-counter medicines by category.",
+        content: "Buy prescription and over-the-counter medicines online with fast delivery.",
       },
     ],
   }),
@@ -27,12 +26,15 @@ export const Route = createFileRoute("/shop")({
 });
 
 type TypeFilter = "all" | "otc" | "rx";
+type SortBy = "relevance" | "price-low" | "price-high" | "name";
 
 function ShopPage() {
   const { data: medicines } = useSuspenseQuery(medicinesQuery);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("All");
   const [type, setType] = useState<TypeFilter>("all");
+  const [sortBy, setSortBy] = useState<SortBy>("relevance");
+  const [showFilters, setShowFilters] = useState(false);
 
   const categories = useMemo(
     () => ["All", ...Array.from(new Set(medicines.map((m) => m.category))).sort()],
@@ -41,7 +43,7 @@ function ShopPage() {
 
   const results = useMemo(() => {
     const term = search.trim().toLowerCase();
-    return medicines.filter((medicine) => {
+    let filtered = medicines.filter((medicine) => {
       const matchesTerm =
         !term ||
         medicine.name.toLowerCase().includes(term) ||
@@ -53,66 +55,176 @@ function ShopPage() {
         (type === "rx" ? medicine.requires_prescription : !medicine.requires_prescription);
       return matchesTerm && matchesCategory && matchesType;
     });
-  }, [medicines, search, category, type]);
+
+    // Apply sorting
+    switch (sortBy) {
+      case "price-low":
+        filtered.sort((a, b) => Number(a.price) - Number(b.price));
+        break;
+      case "price-high":
+        filtered.sort((a, b) => Number(b.price) - Number(a.price));
+        break;
+      case "name":
+        filtered.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      default:
+        break;
+    }
+
+    return filtered;
+  }, [medicines, search, category, type, sortBy]);
+
+  const statsData = [
+    { label: "Available Medicines", value: medicines.length },
+    { label: "OTC Products", value: medicines.filter(m => !m.requires_prescription).length },
+    { label: "Prescription Items", value: medicines.filter(m => m.requires_prescription).length },
+  ];
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10">
-      <h1 className="text-3xl font-semibold">Shop medicines</h1>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Prescription-only items are marked “Rx only” and require a valid prescription at checkout.
-      </p>
-
-      <div className="mt-6 space-y-4 rounded-2xl border border-border bg-card p-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search by name, brand or category"
-            className="pl-9"
-            aria-label="Search medicines"
-          />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {(["all", "otc", "rx"] as const).map((option) => (
-            <Button
-              key={option}
-              size="sm"
-              variant={type === option ? "default" : "outline"}
-              onClick={() => setType(option)}
-            >
-              {option === "all" ? "All items" : option === "otc" ? "Over the counter" : "Prescription"}
-            </Button>
-          ))}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {categories.map((option) => (
-            <button
-              key={option}
-              onClick={() => setCategory(option)}
-              className={
-                category === option
-                  ? "rounded-full bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
-                  : "rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground transition-colors hover:bg-muted"
-              }
-            >
-              {option}
-            </button>
-          ))}
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-primary to-primary-deep text-primary-foreground py-12">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="flex items-center gap-3 mb-4">
+            <Pill className="size-8" />
+            <h1 className="text-4xl font-bold">Online Pharmacy</h1>
+          </div>
+          <p className="text-primary-foreground/80 text-lg max-w-2xl">
+            Quality medicines delivered to your doorstep. Browse our wide selection of prescription and over-the-counter products.
+          </p>
         </div>
       </div>
 
-      <p className="mt-6 text-sm text-muted-foreground">{results.length} products</p>
-      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {results.map((medicine) => (
-          <MedicineCard key={medicine.id} medicine={medicine} />
-        ))}
+      {/* Stats Bar */}
+      <div className="bg-card border-b border-border sticky top-0 z-40">
+        <div className="mx-auto max-w-7xl px-4 py-4">
+          <div className="grid grid-cols-3 gap-6">
+            {statsData.map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="text-2xl font-bold text-primary">{stat.value}</div>
+                <div className="text-xs text-muted-foreground font-medium">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-      {results.length === 0 && (
-        <p className="mt-10 text-center text-sm text-muted-foreground">
-          No medicines match your filters.
-        </p>
-      )}
+
+      <div className="mx-auto max-w-7xl px-4 py-8">
+        {/* Search and Sort Bar */}
+        <div className="space-y-4 mb-8">
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Search by medicine name, brand, or condition..."
+              className="pl-12 h-11 text-base"
+              aria-label="Search medicines"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-3 justify-between items-center">
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-foreground">Filter:</span>
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="lg:hidden flex items-center gap-1 px-3 py-2 rounded-lg border border-border text-sm font-medium hover:bg-secondary transition-colors"
+              >
+                <FilterIcon className="size-4" />
+                Filters
+              </button>
+            </div>
+            
+            <div className="flex gap-2 items-center">
+              <span className="text-sm font-semibold text-foreground">Sort:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as SortBy)}
+                className="px-3 py-2 rounded-lg border border-input text-sm font-medium bg-background cursor-pointer hover:bg-secondary transition-colors"
+              >
+                <option value="relevance">Relevance</option>
+                <option value="price-low">Price: Low to High</option>
+                <option value="price-high">Price: High to Low</option>
+                <option value="name">Name: A to Z</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex gap-8">
+          {/* Sidebar Filters */}
+          <div className={`${showFilters ? "block" : "hidden"} lg:block w-full lg:w-64 space-y-6 pb-8`}>
+            {/* Type Filter */}
+            <div className="bg-card rounded-lg border border-border p-5">
+              <h3 className="font-semibold text-foreground mb-4 text-sm">Product Type</h3>
+              <div className="space-y-3">
+                {(["all", "otc", "rx"] as const).map((option) => (
+                  <label key={option} className="flex items-center gap-3 cursor-pointer group">
+                    <input
+                      type="radio"
+                      name="type"
+                      value={option}
+                      checked={type === option}
+                      onChange={() => setType(option)}
+                      className="w-4 h-4 cursor-pointer accent-primary"
+                    />
+                    <span className="text-sm text-foreground group-hover:text-primary font-medium">
+                      {option === "all" ? "All Products" : option === "otc" ? "Over the Counter" : "Prescription Required"}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Category Filter */}
+            <div className="bg-card rounded-lg border border-border p-5">
+              <h3 className="font-semibold text-foreground mb-4 text-sm">Category</h3>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {categories.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => setCategory(option)}
+                    className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                      category === option
+                        ? "bg-primary/10 text-primary font-semibold"
+                        : "text-foreground hover:bg-secondary"
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Main Content */}
+          <div className="flex-1">
+            {/* Results Header */}
+            <div className="mb-6">
+              <p className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">{results.length}</span> product
+                {results.length !== 1 ? "s" : ""} found
+              </p>
+            </div>
+
+            {/* Product Grid */}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {results.map((medicine) => (
+                <MedicineCard key={medicine.id} medicine={medicine} />
+              ))}
+            </div>
+
+            {/* Empty State */}
+            {results.length === 0 && (
+              <div className="mt-16 text-center py-12 bg-secondary rounded-lg border border-border">
+                <ShoppingBag className="size-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-semibold text-foreground">No medicines found</p>
+                <p className="mt-2 text-sm text-muted-foreground">Try adjusting your search or filters</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
