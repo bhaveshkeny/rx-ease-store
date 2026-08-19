@@ -20,7 +20,9 @@ export SNOWFLAKE_SCHEMA=PUBLIC
 export SNOWFLAKE_WAREHOUSE=COMPUTE_WH
 export SNOWFLAKE_ROLE=SYSADMIN               # optional
 export SECRET_KEY=change-me                  # JWT signing
-export CORS_ORIGINS=http://localhost:5173
+# Add the exact deployed frontend origin here, separated by commas.
+# Example: https://rx-ease.example.com,http://localhost:5173
+export CORS_ORIGINS=https://rx-ease.example.com,http://localhost:5173
 ```
 
 Alternatively set a single `SNOWFLAKE_URL`:
@@ -87,6 +89,18 @@ const medicines = await res.json();
 // authenticated calls
 fetch(`${API}/api/orders`, { headers: { Authorization: `Bearer ${token}` } });
 ```
+
+For a deployed frontend, set `VITE_API_URL` in the frontend hosting environment
+to the public FastAPI URL, and set `CORS_ORIGINS` in the backend environment to
+the frontend origin, for example:
+
+```text
+Frontend: VITE_API_URL=https://api.example.com
+Backend:  CORS_ORIGINS=https://rx-ease.example.com
+```
+
+The frontend origin must match the browser origin exactly, including `https://`,
+but must not include a path such as `/app`.
 
 Login uses form encoding:
 
