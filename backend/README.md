@@ -41,6 +41,12 @@ uvicorn app.main:app --reload --port 8000
 For production, use your provider's private/internal PostgreSQL URL when the backend
 and database run in the same region.
 
+## Deploy to Vercel
+
+Set the Vercel project **Root Directory** to `backend`. The `api/index.py` file
+is the Vercel Python function entrypoint. Configure `DATABASE_URL`, `SECRET_KEY`,
+and `CORS_ORIGINS` in the Vercel project environment variables, then deploy.
+
 
 ## Endpoints
 

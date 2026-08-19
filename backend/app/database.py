@@ -1,14 +1,7 @@
-import os
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-DATABASE_URL = (
-    os.getenv("DATABASE_URL")
-    or os.getenv("POSTGRES_URL_NON_POOLING")
-    or os.getenv("POSTGRES_URL")
-    or "postgresql+psycopg://postgres:postgres@localhost:5432/pharmacy"
-)
+from .config import DATABASE_URL
 
 # Some hosting providers expose the URL with a legacy postgres:// scheme.
 if DATABASE_URL.startswith("postgres://"):
