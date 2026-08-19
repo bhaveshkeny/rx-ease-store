@@ -38,7 +38,7 @@ function CheckoutPage() {
   const total = subtotal + delivery;
 
   const checkoutSchema = Yup.object({
-    fullName: Yup.string().min(2, "Enter your full name").required("Full name is required"),
+    full_name: Yup.string().min(2, "Enter your full name").required("Full name is required"),
     phone: Yup.string().min(7, "Enter a valid phone number").required("Phone number is required"),
     address: Yup.string().min(10, "Enter your complete delivery address").required("Address is required"),
   });
@@ -63,7 +63,7 @@ function CheckoutPage() {
       </p>
 
       <Formik
-        initialValues={{ fullName: "", phone: "", address: "" }}
+        initialValues={{ full_name: "", phone: "", address: "" }}
         validationSchema={checkoutSchema}
         onSubmit={async (values, { setSubmitting }) => {
           if (needsPrescription && !file) {
@@ -92,8 +92,8 @@ function CheckoutPage() {
         <div className="space-y-5 rounded-2xl border border-border bg-card p-6">
           <div className="space-y-1.5">
             <Label htmlFor="name">Full name</Label>
-            <Field as={Input} id="name" name="fullName" />
-            <ErrorMessage name="fullName" component="p" className="text-xs text-destructive" />
+            <Field as={Input} id="name" name="full_name" />
+            <ErrorMessage name="full_name" component="p" className="text-xs text-destructive" />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="phone">Phone number</Label>
