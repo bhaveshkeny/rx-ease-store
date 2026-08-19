@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { medicinesQuery } from "@/lib/medicines";
 
 export const Route = createFileRoute("/shop")({
-  loader: ({ context }) => context.queryClient.prefetchQuery(medicinesQuery),
+  loader: ({ context }) =>
+    context.queryClient.prefetchQuery(medicinesQuery).catch(() => undefined),
   head: () => ({
     meta: [
       { title: "Shop Medicines — RxEase Pharmacy" },

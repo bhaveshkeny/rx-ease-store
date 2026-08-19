@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/button";
 import { medicinesQuery } from "@/lib/medicines";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.prefetchQuery(medicinesQuery),
+  loader: ({ context }) =>
+    context.queryClient.prefetchQuery(medicinesQuery).catch(() => undefined),
   head: () => ({
     meta: [
       { title: "MediCare Pharmacy — Prescription & OTC Medicines Online" },
