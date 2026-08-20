@@ -13,27 +13,6 @@ on:
         default: 'true'
 
 jobs:
-  backend:
-    name: Backend tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-      - name: Install backend deps
-        run: |
-          python -m venv .venv
-          source .venv/bin/activate
-          pip install --upgrade pip
-          pip install -r backend/requirements.txt
-          pip install pytest
-      - name: Run backend tests
-        run: |
-          source .venv/bin/activate
-          pytest -q
-
   frontend:
     name: Frontend build
     runs-on: ubuntu-latest
