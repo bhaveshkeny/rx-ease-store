@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
-from .config import CORS_ORIGINS
+from .config import AUTO_INIT_DB, CORS_ORIGINS
 from .routers import auth_routes, medicines, orders
 from .seed import seed_medicines,seed_users
 
@@ -30,9 +30,10 @@ app.include_router(orders.router)
 
 @app.on_event("startup")
 def on_startup() -> None:
-    Base.metadata.create_all(bind=engine)
-    seed_medicines()
-    seed_users()
+    if AUTO_INIT_DB:
+        Base.metadata.create_all(bind=engine)
+        seed_medicines()
+        seed_users()
 
 
 @app.get("/api/health", tags=["health"])

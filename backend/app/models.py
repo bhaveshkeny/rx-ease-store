@@ -52,6 +52,10 @@ class Order(Base):
     total: Mapped[float] = mapped_column(Float, default=0)
     status: Mapped[str] = mapped_column(String, default="placed")
     prescription_path: Mapped[str | None] = mapped_column(String, nullable=True)
+    prescription_filename: Mapped[str | None] = mapped_column(String, nullable=True)
+    prescription_content_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Stored in Neon so prescription uploads survive Vercel function restarts.
+    prescription_data: Mapped[bytes | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     user: Mapped[User] = relationship(back_populates="orders")

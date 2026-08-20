@@ -1,6 +1,14 @@
-__pycache__/
-*.pyc
+# Python
 .venv/
-pharmacy.db
-uploads/
+__pycache__/
+*.py[cod]
+
+# Environment / secrets
 .env
+
+# Local databases / uploads
+*.db
+uploads/
+
+# Test / tooling
+.pytest_cache/

@@ -1,9 +1,6 @@
 import re
 import time
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -14,7 +11,6 @@ from ..schemas import OrderCreate, OrderOut, OrderStatusUpdate
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
-UPLOAD_DIR = Path(__file__).resolve().parent.parent.parent / "uploads" / "prescriptions"
 ALLOWED_TYPES = {"image/jpeg", "image/png", "application/pdf"}
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 ALLOWED_STATUSES = {"placed", "awaiting_verification", "dispensed", "delivered", "cancelled"}
@@ -92,14 +88,15 @@ async def upload_prescription(
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="File larger than 10 MB")
 
-    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
     safe_name = re.sub(r"[^\w.\-]", "_", file.filename or "prescription")
     relative = f"{user.id}/{int(time.time())}-{safe_name}"
-    destination = UPLOAD_DIR / relative
-    destination.parent.mkdir(parents=True, exist_ok=True)
-    destination.write_bytes(content)
 
+    # Vercel function filesystems are ephemeral, so do not write uploads to disk.
+    # Store the small prescription file directly in Neon for this project.
     order.prescription_path = relative
+    order.prescription_filename = safe_name
+    order.prescription_content_type = file.content_type
+    order.prescription_data = content
     db.commit()
     db.refresh(order)
     return order
@@ -117,10 +114,20 @@ def download_prescription(
     if order.user_id != user.id and not user.is_pharmacist:
         raise HTTPException(status_code=403, detail="Not allowed")
 
-    path = (UPLOAD_DIR / order.prescription_path).resolve()
-    if not str(path).startswith(str(UPLOAD_DIR.resolve())) or not path.exists():
+    if not order.prescription_data:
         raise HTTPException(status_code=404, detail="Prescription file missing")
-    return FileResponse(path)
+
+    from fastapi.responses import Response
+
+    return Response(
+        content=order.prescription_data,
+        media_type=order.prescription_content_type or "application/octet-stream",
+        headers={
+            "Content-Disposition": (
+                f'attachment; filename="{order.prescription_filename or "prescription"}"'
+            )
+        },
+    )
 
 
 @router.get("/pharmacy/queue", response_model=list[OrderOut])
