@@ -113,8 +113,9 @@ jobs:
       - name: Deploy backend to Fly.io
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_APP: ${{ secrets.FLY_APP }}
         run: |
           set -e
-          # Authenticate and deploy the pre-built image from GHCR. Requires secrets: FLY_API_TOKEN and FLY_APP
-          flyctl auth token "$FLY_API_TOKEN"
-          flyctl deploy --image ghcr.io/${{ github.repository }}-backend:latest --app ${{ secrets.FLY_APP }} --remote-only
+          # Use the provided FLY_API_TOKEN (do not run the deprecated `flyctl auth token` command)
+          # Deploy the pre-built image from GHCR. Requires secrets: FLY_API_TOKEN and FLY_APP
+          flyctl deploy --image ghcr.io/${{ github.repository }}-backend:latest --app "$FLY_APP" --remote-only
