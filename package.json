@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --cwd frontend run dev",
-    "build": "bun --cwd frontend run build",
-    "build:dev": "bun --cwd frontend run build:dev",
-    "preview": "bun --cwd frontend run preview",
-    "lint": "bun --cwd frontend run lint"
+    "dev": "cd frontend && vite dev",
+    "build": "cd frontend && vite build",
+    "build:dev": "cd frontend && vite build --mode development",
+    "preview": "cd frontend && vite preview",
+    "lint": "cd frontend && eslint ."
   }
 }
