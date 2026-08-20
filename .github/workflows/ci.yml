@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, 'feature/bahveshkeny-infra' ]
+    branches: [ main, 'feature/bhaveshkeny-infra' ]
   pull_request:
-    branches: [ main, 'feature/bahveshkeny-infra' ]
+    branches: [ main, 'feature/bhaveshkeny-infra' ]
   workflow_dispatch:
     inputs:
       build_images:
