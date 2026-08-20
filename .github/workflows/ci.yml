@@ -88,34 +88,19 @@ jobs:
           push: ${{ github.event.inputs.build_images == 'true' }}
           tags: ghcr.io/${{ github.repository }}-backend:${{ github.sha }},ghcr.io/${{ github.repository }}-backend:latest
 
-  deploy-fly:
-    name: Deploy to Fly.io
+  deploy-vercel:
+    name: Deploy Frontend to Vercel
     runs-on: ubuntu-latest
-    needs: [ docker-images, build-backend ]
+    needs: [ frontend ]
     if: github.event_name != 'pull_request' && (github.event.inputs.build_images == 'true' || github.event.inputs.build_images == null)
     steps:
       - uses: actions/checkout@v4
-      - name: Set up flyctl
-        uses: superfly/flyctl-actions/setup-flyctl@v1
-      - name: Validate Fly secrets
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          FLY_APP: ${{ secrets.FLY_APP }}
-        run: |
-          if [ -z "$FLY_API_TOKEN" ]; then
-            echo "Misssing required secret: FLY_API_TOKEN" >&2
-            exit 1
-          fi
-          if [ -z "$FLY_APP" ]; then
-            echo "Missing required secret: FLY_APP" >&2
-            exit 1
-          fi
-      - name: Deploy backend to Fly.io
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          FLY_APP: ${{ secrets.FLY_APP }}
-        run: |
-          set -e
-          # Use the provided FLY_API_TOKEN (do not run the deprecated `flyctl auth token` command)
-          # Deploy the pre-built image from GHCR. Requires secrets: FLY_API_TOKEN and FLY_APP
-          flyctl deploy --image ghcr.io/${{ github.repository }}-backend:latest --app "$FLY_APP" --remote-only
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v20
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-args: --prod --confirm
+          working-directory: .
+          # Optionally set these if your project is configured in a different Vercel org/project
+          # vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          # vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
