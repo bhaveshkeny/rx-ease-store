@@ -118,3 +118,5 @@ jobs:
           # Authenticate and deploy the pre-built image from GHCR. Requires secrets: FLY_API_TOKEN and FLY_APP
           flyctl auth token "$FLY_API_TOKEN"
           flyctl deploy --image ghcr.io/${{ github.repository }}-backend:latest --app ${{ secrets.FLY_APP }} --remote-only
+
+--build
