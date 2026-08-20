@@ -103,7 +103,7 @@ jobs:
           FLY_APP: ${{ secrets.FLY_APP }}
         run: |
           if [ -z "$FLY_API_TOKEN" ]; then
-            echo "Missing required secret: FLY_API_TOKEN" >&2
+            echo "Misssing required secret: FLY_API_TOKEN" >&2
             exit 1
           fi
           if [ -z "$FLY_APP" ]; then
