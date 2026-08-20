@@ -97,7 +97,24 @@ export const apiClient = {
       return data;
     },
   },
+  support: {
+    async chat(message: string) {
+      const { data } = await api.post<{ reply: string; needs_human: boolean }>(
+        "/api/support/chat",
+        { message },
+      );
+      return data;
+    },
+    async handoff(message: string, transcript: string) {
+      const { data } = await api.post<{ id: string; message: string; status: string }>(
+        "/api/support/handoff",
+        { message, transcript },
+      );
+      return data;
+    },
+  },
 };
+
 
 export function apiErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {

@@ -91,3 +91,26 @@ class OrderOut(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     status: str
+
+
+class SupportChatIn(BaseModel):
+    message: str
+
+
+class SupportChatOut(BaseModel):
+    reply: str
+    needs_human: bool = False
+
+
+class SupportHandoffIn(BaseModel):
+    message: str
+    transcript: str | None = None
+
+
+class SupportTicketOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    message: str
+    status: str
+    created_at: datetime
