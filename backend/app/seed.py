@@ -3,7 +3,7 @@ import uuid
 
 from sqlalchemy import select
 
-from .database import SessionLocal
+from .database import SessionLocal, Base, engine
 from .models import Medicine, User
 
 MEDICINES = [
@@ -32,6 +32,9 @@ MEDICINES = [
 
 def seed_medicines() -> None:
     """Insert the starter catalogue once, on first boot."""
+    # Ensure tables exist on the current engine before seeding.
+    Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     try:
         if db.scalar(select(Medicine).limit(1)):
