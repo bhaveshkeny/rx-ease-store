@@ -1,0 +1,12 @@
+{
+  "name": "medicare-pharmacy",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --cwd frontend run dev",
+    "build": "bun --cwd frontend run build",
+    "build:dev": "bun --cwd frontend run build:dev",
+    "preview": "bun --cwd frontend run preview",
+    "lint": "bun --cwd frontend run lint"
+  }
+}
