@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       build_images:
-        description: 'Build and push Docker images (true/false)'
+        description: 'Buiild and push Docker images (true/false)'
         required: false
         default: 'true'
 
