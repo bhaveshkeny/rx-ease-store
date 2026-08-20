@@ -54,7 +54,7 @@ jobs:
   docker-images:
     name: Build and push images (optional)
     runs-on: ubuntu-latest
-    needs: [backend, frontend, build-backend]
+    needs: [ frontend, build-backend]
     if: github.event_name != 'pull_request' && (github.event.inputs.build_images == 'true' || github.event.inputs.build_images == null)
     steps:
       - uses: actions/checkout@v4
