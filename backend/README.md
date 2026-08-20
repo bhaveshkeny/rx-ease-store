@@ -1,132 +1,86 @@
-# MediCare Pharmacy — Backend (Python FastAPI + Snowflake)
+# Rx-Ease Pharmacy Backend — FastAPI + Neon Postgres + Vercel
 
-Standalone FastAPI service that mirrors the storefront's backend: accounts, medicine
-catalogue, orders, prescription uploads and a pharmacist verification queue.
-Data lives in Snowflake via SQLAlchemy (`snowflake-sqlalchemy`).
+This backend is prepared for deployment as a Vercel Python Function with Neon PostgreSQL.
 
-## 1. Prepare Snowflake
+## What was changed
 
-Run `snowflake_setup.sql` in a worksheet to create the warehouse, database and schema
-(and grant your app role access). Tables are created automatically on first boot.
+- Replaced SQLite with PostgreSQL through `DATABASE_URL`.
+- Added Psycopg 3 for PostgreSQL.
+- Added `api/index.py` as the Vercel FastAPI entry point.
+- Added `vercel.json`.
+- Removed the local SQLite database, `.venv`, tests and uploaded prescription files from the deployment package.
+- Prescription uploads are stored in Neon instead of the Vercel filesystem, because Vercel function storage is not persistent.
+- Kept the existing `/api/auth`, `/api/medicines`, and `/api/orders` routes.
 
-## 2. Configure credentials
+## Local setup
 
-```sh
-export SNOWFLAKE_ACCOUNT=ab12345.eu-west-1   # account identifier
-export SNOWFLAKE_USER=pharmacy_app
-export SNOWFLAKE_PASSWORD=•••••
-export SNOWFLAKE_DATABASE=PHARMACY
-export SNOWFLAKE_SCHEMA=PUBLIC
-export SNOWFLAKE_WAREHOUSE=COMPUTE_WH
-export SNOWFLAKE_ROLE=SYSADMIN               # optional
-export SECRET_KEY=change-me                  # JWT signing
-# Add the exact deployed frontend origin here, separated by commas.
-# Example: https://rx-ease.example.com,http://localhost:5173
-export CORS_ORIGINS=https://rx-ease.example.com,http://localhost:5173
-```
-
-Alternatively set a single `SNOWFLAKE_URL`:
-`snowflake://user:pass@account/PHARMACY/PUBLIC?warehouse=COMPUTE_WH&role=SYSADMIN`
-(URL-encode special characters in the password). For key-pair auth, pass
-`connect_args={"private_key": ...}` in `app/database.py`.
-
-## 3. Run locally
-
-```sh
+```powershell
 cd backend
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+.venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+Create `.env` from `.env.example` and put your Neon connection string in `DATABASE_URL`.
+
+Run:
+
+```powershell
 uvicorn app.main:app --reload --port 8000
 ```
 
-- API docs: http://localhost:8000/docs
-- On first boot the tables are created in `PHARMACY.PUBLIC` and seeded with 18 medicines.
-- Prescription files are stored on disk under `backend/uploads/prescriptions/<user_id>/`
-  (Snowflake stores only the relative path; swap in a stage/S3 for production).
+Open `http://localhost:8000/docs`.
 
-Notes for Snowflake: indexes are not used (Snowflake has none), keys/constraints are
-declared but not enforced, and the warehouse auto-suspends when idle.
+## Vercel entry point
 
+Vercel uses `api/index.py` and the exported `app` FastAPI application.
 
-## Endpoints
-
-| Method | Path | Auth | Purpose |
-| --- | --- | --- | --- |
-| POST | `/api/auth/register` | – | Create an account, returns JWT |
-| POST | `/api/auth/login` | – | OAuth2 password form login (`username` = email) |
-| GET | `/api/auth/me` | user | Current profile |
-| GET | `/api/medicines` | – | Catalogue with `search`, `category`, `rx_only` filters |
-| GET | `/api/medicines/categories` | – | Distinct categories |
-| GET | `/api/medicines/{id}` | – | Single medicine |
-| POST | `/api/medicines` | pharmacist | Add a medicine |
-| POST | `/api/orders` | user | Place order (server prices items, decrements stock) |
-| GET | `/api/orders` | user | Own order history |
-| POST | `/api/orders/{id}/prescription` | owner | Upload JPG/PNG/PDF (max 10 MB) |
-| GET | `/api/orders/{id}/prescription` | owner or pharmacist | Download prescription |
-| GET | `/api/orders/pharmacy/queue` | pharmacist | Orders awaiting verification |
-| PATCH | `/api/orders/{id}/status` | pharmacist | `placed`/`awaiting_verification`/`dispensed`/`delivered`/`cancelled` |
-
-Orders containing an Rx medicine are created as `awaiting_verification`; everything
-else as `placed`. Delivery is £3.99 under a £30 subtotal, free above.
-
-## Making a pharmacist
-
-```sh
-python -c "from app.database import SessionLocal; from app.models import User; \
-db=SessionLocal(); u=db.query(User).filter_by(email='you@example.com').first(); \
-u.is_pharmacist=True; db.commit()"
-```
-
-## Pointing a React frontend at this API
-
-```ts
-const API = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
-
-const res = await fetch(`${API}/api/medicines`);
-const medicines = await res.json();
-
-// authenticated calls
-fetch(`${API}/api/orders`, { headers: { Authorization: `Bearer ${token}` } });
-```
-
-For a deployed frontend, set `VITE_API_URL` in the frontend hosting environment
-to the public FastAPI URL, and set `CORS_ORIGINS` in the backend environment to
-the frontend origin, for example:
+The API will be available under:
 
 ```text
-Frontend: VITE_API_URL=https://api.example.com
-Backend:  CORS_ORIGINS=https://rx-ease.example.com
+https://YOUR-BACKEND.vercel.app/api/health
+https://YOUR-BACKEND.vercel.app/docs
 ```
 
-The frontend origin must match the browser origin exactly, including `https://`,
-but must not include a path such as `/app`.
+## Important
 
-Login uses form encoding:
+Do not upload `.env` to GitHub. Add the environment variables in Vercel.
 
-```ts
-await fetch(`${API}/api/auth/login`, {
-  method: "POST",
-  headers: { "Content-Type": "application/x-www-form-urlencoded" },
-  body: new URLSearchParams({ username: email, password }),
-});
+For a separate React Vercel project, set:
+
+```text
+DATABASE_URL=<Neon connection string>
+SECRET_KEY=<strong random secret>
+CORS_ORIGINS=https://YOUR-FRONTEND.vercel.app
+AUTO_INIT_DB=true
 ```
 
-## Folder layout
+If frontend and backend are deployed under the same Vercel project/domain, CORS is normally unnecessary.
 
-```
-backend/
-  requirements.txt
-  app/
-    main.py        FastAPI app, CORS, startup (create tables + seed)
-    database.py    Snowflake engine + session dependency
-    models.py      users, medicines, orders, order_items
-    schemas.py     Pydantic request/response models
-    auth.py        password hashing, JWT, current-user dependencies
-    seed.py        starter catalogue
-    routers/       auth_routes.py, medicines.py, orders.py
-```
+## Database initialization
 
-> The React frontend in this repo lives in `src/` and currently runs against the
-> hosted managed backend. To run fully local, swap its data calls for `fetch`
-> calls to this API as shown above.
+With `AUTO_INIT_DB=true`, the first Vercel invocation creates the SQLAlchemy tables and inserts the starter medicines/users if the tables are empty.
+
+For a production application, use migrations (Alembic) rather than relying on `create_all()`.
+
+## Prescription storage
+
+Prescription files are stored as PostgreSQL binary data. This makes the current project work on Vercel without a local filesystem dependency.
+
+For a larger production pharmacy application, move prescription files to object storage such as Vercel Blob/S3 and keep only the object URL/key in Postgres.
+
+## API
+
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+- `GET /api/medicines`
+- `GET /api/medicines/categories`
+- `GET /api/medicines/{id}`
+- `POST /api/medicines`
+- `POST /api/orders`
+- `GET /api/orders`
+- `POST /api/orders/{id}/prescription`
+- `GET /api/orders/{id}/prescription`
+- `GET /api/orders/pharmacy/queue`
+- `PATCH /api/orders/{id}/status`

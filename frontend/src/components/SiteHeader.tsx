@@ -11,11 +11,17 @@ const links = [
   { to: "/shop", label: "Shop" },
   { to: "/prescriptions", label: "Prescriptions" },
   { to: "/orders", label: "My orders" },
+   { to: "/support", label: "Customer Support" },
 ] as const;
 
 export function SiteHeader() {
   const { count } = useCart();
   const { user, signOut } = useAuth();
+
+  const displayName =
+    user?.full_name?.trim() || user?.email?.split("@")[0] || "My account";
+  const userInitial = displayName.charAt(0).toUpperCase();
+
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
@@ -63,9 +69,28 @@ export function SiteHeader() {
           </Button>
 
           {user ? (
-            <Button variant="outline" size="sm" onClick={handleSignOut} className="hidden md:inline-flex">
-              Sign out
-            </Button>
+            <div className="hidden items-center gap-2 md:flex">
+              <div className="flex min-w-0 items-center gap-2">
+                <span
+                  aria-hidden="true"
+                  className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground"
+                >
+                  {userInitial}
+                </span>
+                <span className="max-w-[180px] truncate text-sm font-semibold text-foreground">
+                  {displayName}
+                </span>
+              </div>
+
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleSignOut}
+                className="bg-primary text-primary-foreground hover:bg-orange-500"
+              >
+                Sign out
+              </Button>
+            </div>
           ) : (
             <Button asChild size="sm" className="hidden md:inline-flex">
               <Link to="/auth">
@@ -92,10 +117,29 @@ export function SiteHeader() {
                     {link.label}
                   </Link>
                 ))}
+
                 {user ? (
-                  <Button variant="outline" className="mt-4" onClick={handleSignOut}>
-                    Sign out
-                  </Button>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        aria-hidden="true"
+                        className="flex size-9 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-semibold text-secondary-foreground"
+                      >
+                        {userInitial}
+                      </span>
+                      <span className="max-w-[220px] break-words text-sm font-semibold text-foreground">
+                        {displayName}
+                      </span>
+                    </div>
+
+                    <Button
+                      variant="default"
+                      onClick={handleSignOut}
+                      className="w-full bg-primary text-primary-foreground hover:bg-orange-500"
+                    >
+                      Sign out
+                    </Button>
+                  </div>
                 ) : (
                   <Button asChild className="mt-4">
                     <Link to="/auth" onClick={() => setOpen(false)}>

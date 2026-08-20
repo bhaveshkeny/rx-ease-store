@@ -44,6 +44,7 @@ function AuthPage() {
     email: Yup.string().email("Enter a valid email").required("Email is required"),
     password: Yup.string().required("Password is required"),
   });
+
   const signUpSchema = signInSchema.shape({
     fullName: Yup.string().min(2, "Enter your full name").required("Full name is required"),
     password: Yup.string().min(6, "Use at least 6 characters").required("Password is required"),
@@ -91,21 +92,23 @@ function AuthPage() {
                 }}
               >
                 {({ isSubmitting }) => (
-              <Form className="mt-4 space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Field as={Input} id="signin-email" name="email" type="email" />
-                  <ErrorMessage name="email" component="p" className="text-xs text-destructive" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="signin-password">Password</Label>
-                  <Field as={Input} id="signin-password" name="password" type="password" />
-                  <ErrorMessage name="password" component="p" className="text-xs text-destructive" />
-                </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  Sign in
-                </Button>
-              </Form>
+                  <Form className="mt-4 space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signin-email">Email</Label>
+                      <Field as={Input} id="signin-email" name="email" type="email" />
+                      <ErrorMessage name="email" component="p" className="text-xs text-destructive" />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signin-password">Password</Label>
+                      <Field as={Input} id="signin-password" name="password" type="password" />
+                      <ErrorMessage name="password" component="p" className="text-xs text-destructive" />
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      Sign in
+                    </Button>
+                  </Form>
                 )}
               </Formik>
             </TabsContent>
@@ -116,7 +119,12 @@ function AuthPage() {
                 validationSchema={signUpSchema}
                 onSubmit={async (values, { setSubmitting }) => {
                   try {
-                    await useAuthStore.getState().signUp(values);
+                    await useAuthStore.getState().signUp({
+                      email: values.email,
+                      password: values.password,
+                      full_name: values.fullName,
+                    });
+
                     setEmail(values.email);
                     setPendingConfirm(true);
                     toast.success("Your account is ready. Welcome to MediCare.");
@@ -128,26 +136,29 @@ function AuthPage() {
                 }}
               >
                 {({ isSubmitting }) => (
-              <Form className="mt-4 space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="signup-name">Full name</Label>
-                  <Field as={Input} id="signup-name" name="fullName" />
-                  <ErrorMessage name="fullName" component="p" className="text-xs text-destructive" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="signup-email">Email</Label>
-                  <Field as={Input} id="signup-email" name="email" type="email" />
-                  <ErrorMessage name="email" component="p" className="text-xs text-destructive" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="signup-password">Password</Label>
-                  <Field as={Input} id="signup-password" name="password" type="password" />
-                  <ErrorMessage name="password" component="p" className="text-xs text-destructive" />
-                </div>
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
-                  Create account
-                </Button>
-              </Form>
+                  <Form className="mt-4 space-y-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-name">Full name</Label>
+                      <Field as={Input} id="signup-name" name="fullName" />
+                      <ErrorMessage name="fullName" component="p" className="text-xs text-destructive" />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-email">Email</Label>
+                      <Field as={Input} id="signup-email" name="email" type="email" />
+                      <ErrorMessage name="email" component="p" className="text-xs text-destructive" />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="signup-password">Password</Label>
+                      <Field as={Input} id="signup-password" name="password" type="password" />
+                      <ErrorMessage name="password" component="p" className="text-xs text-destructive" />
+                    </div>
+
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      Create account
+                    </Button>
+                  </Form>
                 )}
               </Formik>
             </TabsContent>
