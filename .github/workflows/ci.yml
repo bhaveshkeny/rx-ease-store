@@ -97,6 +97,19 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up flyctl
         uses: superfly/flyctl-actions/setup-flyctl@v1
+      - name: Validate Fly secrets
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          FLY_APP: ${{ secrets.FLY_APP }}
+        run: |
+          if [ -z "$FLY_API_TOKEN" ]; then
+            echo "Missing required secret: FLY_API_TOKEN" >&2
+            exit 1
+          fi
+          if [ -z "$FLY_APP" ]; then
+            echo "Missing required secret: FLY_APP" >&2
+            exit 1
+          fi
       - name: Deploy backend to Fly.io
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
