@@ -9,6 +9,7 @@ RUN npm ci --prefer-offline --no-audit --progress=false || npm install
 RUN npm run build
 
 FROM nginx:alpine
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Nitro / TanStack Start builds to `.output/public` — copy that into nginx
+COPY --from=builder /app/.output/public /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
