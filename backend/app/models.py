@@ -71,3 +71,14 @@ class OrderItem(Base):
     unit_price: Mapped[float] = mapped_column(Float, default=0)
 
     order: Mapped[Order] = relationship(back_populates="items")
+
+
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id"), nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    transcript: Mapped[str] = mapped_column(Text, default="")
+    status: Mapped[str] = mapped_column(String, default="open")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)

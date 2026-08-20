@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .database import Base, engine
 from .config import AUTO_INIT_DB, CORS_ORIGINS
-from .routers import auth_routes, medicines, orders
+from .routers import auth_routes, medicines, orders, support
 from .seed import seed_medicines,seed_users
 
 app = FastAPI(
@@ -32,6 +32,7 @@ app.add_middleware(
 app.include_router(auth_routes.router)
 app.include_router(medicines.router)
 app.include_router(orders.router)
+app.include_router(support.router)
 
 
 @app.on_event("startup")
