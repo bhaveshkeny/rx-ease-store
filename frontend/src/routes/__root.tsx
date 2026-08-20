@@ -14,6 +14,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { Toaster } from "@/components/ui/sonner";
 import { CartProvider } from "@/lib/cart";
+import { SupportChatBot } from "@/components/SupportChatBot";
 
 
 function NotFoundComponent() {
@@ -140,6 +141,7 @@ function RootComponent() {
           </main>
           <SiteFooter />
         </div>
+        <SupportChatBot />
         <Toaster position="top-center" richColors />
       </CartProvider>
     </QueryClientProvider>
