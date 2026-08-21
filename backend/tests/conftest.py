@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -68,11 +69,22 @@ def db():
 
 
 @pytest.fixture()
-def client(db, tmp_path, monkeypatch):
-    """TestClient with a fresh schema and an isolated prescription upload dir."""
+def client(db, monkeypatch):
+    """TestClient with a fresh schema and an isolated Blob mock."""
     from app.routers import orders as orders_router
 
-    monkeypatch.setattr(orders_router, "UPLOAD_DIR", tmp_path / "prescriptions")
+    blobs: dict[str, bytes] = {}
+
+    async def fake_upload_blob(pathname: str, content: bytes, content_type: str) -> dict:
+        url = f"https://blob.vercel-storage.com/{pathname}"
+        blobs[url] = content
+        return {"url": url}
+
+    async def fake_download_blob(url: str) -> httpx.Response:
+        return httpx.Response(200, content=blobs[url], headers={"content-type": "image/png"})
+
+    monkeypatch.setattr(orders_router, "upload_blob", fake_upload_blob)
+    monkeypatch.setattr(orders_router, "download_blob", fake_download_blob)
     with TestClient(app, headers={"X-API-Key": "test-api-key"}) as c:  # runs startup: create_all + seed_medicines
         yield c
 

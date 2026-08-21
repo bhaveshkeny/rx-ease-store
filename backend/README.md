@@ -53,6 +53,7 @@ For a separate React Vercel project, set:
 DATABASE_URL=<Neon connection string>
 SECRET_KEY=<strong random secret>
 API_KEY=<long random API key>
+BLOB_READ_WRITE_TOKEN=<Vercel Blob read-write token>
 CORS_ORIGINS=https://YOUR-FRONTEND.vercel.app
 AUTO_INIT_DB=true
 ```
@@ -67,7 +68,7 @@ For a production application, use migrations (Alembic) rather than relying on `c
 
 ## Prescription storage
 
-Prescription files are stored as PostgreSQL binary data. This makes the current project work on Vercel without a local filesystem dependency.
+Prescription files are uploaded to a private Vercel Blob store using `BLOB_READ_WRITE_TOKEN`. The database stores the returned Blob URL, while the authenticated API proxies downloads so users cannot access another user's prescription.
 
 For a larger production pharmacy application, move prescription files to object storage such as Vercel Blob/S3 and keep only the object URL/key in Postgres.
 
