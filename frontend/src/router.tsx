@@ -10,7 +10,11 @@ export const getRouter = () => {
     routeTree,
     context: { queryClient },
     scrollRestoration: true,
-    defaultPreloadStaleTime: 0,
+    // 0 meant every preload (hover/tap-intent) was treated as instantly
+    // stale, so it re-fetched anyway — defeating the point of preloading
+    // and making navigation feel slow. 30s lets a recent preload/visit
+    // be reused instead of re-fetching on every navigation.
+    defaultPreloadStaleTime: 30 * 1000,
   });
 
   // Carries the server's prefetched query cache into the HTML and rehydrates
