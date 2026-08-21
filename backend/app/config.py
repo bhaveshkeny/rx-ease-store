@@ -9,3 +9,4 @@ SECRET_KEY = os.getenv("SECRET_KEY", "change-me-in-production")
 CORS_ORIGINS = os.getenv(
     "CORS_ORIGINS", "http://localhost:5173,http://localhost:8080,https://rx-ease-store-app-2.vercel.app/"
 )
+AUTO_INIT_DB = os.getenv("AUTO_INIT_DB", "false").lower() == "true"

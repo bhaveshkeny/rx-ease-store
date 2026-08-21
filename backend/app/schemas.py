@@ -17,6 +17,13 @@ class MedicineOut(BaseModel):
     stock: int
     image_url: str | None
 
+class PaginatedMedicineResponse(BaseModel):
+    items: list[MedicineOut]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
+
 
 class MedicineCreate(BaseModel):
     name: str
