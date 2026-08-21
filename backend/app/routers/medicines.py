@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from ..auth import require_pharmacist
 from ..database import get_db
 from ..models import Medicine
-from ..schemas import MedicineCreate, MedicineOut
+from ..schemas import MedicineCreate, MedicineOut, MedicineUpdate
 
 router = APIRouter(prefix="/api/medicines", tags=["medicines"])
 
