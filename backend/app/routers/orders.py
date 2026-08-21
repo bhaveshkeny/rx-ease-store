@@ -16,14 +16,14 @@ from ..schemas import OrderCreate, OrderOut, OrderStatusUpdate
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
-BLOB_BASE_URL = "https://blob.vercel-storage.com"
+BLOB_API_URL = "https://vercel.com/api/blob/"
 ALLOWED_TYPES = {"image/jpeg", "image/png", "application/pdf"}
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
 ALLOWED_STATUSES = {"placed", "awaiting_verification", "dispensed", "delivered", "cancelled"}
 
 
-def blob_url(pathname: str) -> str:
-    return f"{BLOB_BASE_URL}/{quote(pathname, safe='/')}"
+def blob_api_url(pathname: str) -> str:
+    return f"{BLOB_API_URL}?pathname={quote(pathname, safe='/')}"
 
 
 async def upload_blob(pathname: str, content: bytes, content_type: str) -> dict:
@@ -31,12 +31,13 @@ async def upload_blob(pathname: str, content: bytes, content_type: str) -> dict:
         raise HTTPException(status_code=503, detail="Blob storage is not configured")
     headers = {
         "Authorization": f"Bearer {BLOB_READ_WRITE_TOKEN}",
-        "x-api-version": "7",
+        "x-api-version": "12",
+        "x-vercel-blob-access": "private",
         "x-content-type": content_type,
         "x-add-random-suffix": "0",
     }
     async with httpx.AsyncClient(timeout=30) as client:
-        response = await client.put(blob_url(pathname), content=content, headers=headers)
+        response = await client.put(blob_api_url(pathname), content=content, headers=headers)
     if response.is_error:
         raise HTTPException(status_code=502, detail="Could not upload prescription")
     return response.json()
