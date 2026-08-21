@@ -71,20 +71,23 @@ function SupportPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <header className="mb-8 flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Customer Support</p>
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Care Team</p>
           <h1 className="mt-2 text-3xl font-semibold tracking-tight">Open chat</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Get help with prescriptions, orders, and delivery.
+          </p>
         </div>
 
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm text-muted-foreground">
           <span className="size-2.5 rounded-full bg-emerald-500" />
           Online now
         </div>
-      </div>
+      </header>
 
       <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-card">
           <div className="flex items-center justify-between border-b border-border bg-background px-4 py-3">
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -160,7 +163,7 @@ function SupportPage() {
         </div>
 
         <div className="space-y-5">
-          <div className="rounded-3xl border border-border bg-card p-5">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-card">
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Phone className="size-5" />
@@ -172,7 +175,7 @@ function SupportPage() {
             </div>
           </div>
 
-          <div className="rounded-3xl border border-border bg-card p-5">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-card">
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
                 <Sparkles className="size-5" />
