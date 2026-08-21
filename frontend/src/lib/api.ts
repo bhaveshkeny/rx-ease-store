@@ -21,6 +21,18 @@ export type Medicine = {
   image_url: string | null;
 };
 
+export type MedicineInput = {
+  name: string;
+  brand: string | null;
+  category: string;
+  description: string | null;
+  price: number;
+  pack_size: string | null;
+  requires_prescription: boolean;
+  stock: number;
+  image_url: string | null;
+};
+
 export type OrderItem = {
   id: string;
   medicine_id: string | null;
