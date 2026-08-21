@@ -46,3 +46,4 @@ def on_startup() -> None:
 @app.get("/api/health", tags=["health"])
 def health():
     return {"status": "ok"}
+    
