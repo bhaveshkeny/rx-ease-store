@@ -56,3 +56,35 @@ def create_medicine(
     db.commit()
     db.refresh(medicine)
     return medicine
+
+
+@router.put("/{medicine_id}", response_model=MedicineOut)
+def update_medicine(
+    medicine_id: str,
+    payload: MedicineUpdate,
+    db: Session = Depends(get_db),
+    _=Depends(require_pharmacist),
+):
+    medicine = db.get(Medicine, medicine_id)
+    if not medicine:
+        raise HTTPException(status_code=404, detail="Medicine not found")
+    for field, value in payload.model_dump(exclude_unset=True).items():
+        setattr(medicine, field, value)
+    db.commit()
+    db.refresh(medicine)
+    return medicine
+
+
+@router.delete("/{medicine_id}", status_code=204)
+def delete_medicine(
+    medicine_id: str,
+    db: Session = Depends(get_db),
+    _=Depends(require_pharmacist),
+):
+    medicine = db.get(Medicine, medicine_id)
+    if not medicine:
+        raise HTTPException(status_code=404, detail="Medicine not found")
+    db.delete(medicine)
+    db.commit()
+    return None
+
