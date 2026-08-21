@@ -30,6 +30,20 @@ class MedicineCreate(BaseModel):
     image_url: str | None = None
 
 
+class MedicineUpdate(BaseModel):
+    name: str | None = None
+    brand: str | None = None
+    category: str | None = None
+    description: str | None = None
+    price: float | None = None
+    pack_size: str | None = None
+    requires_prescription: bool | None = None
+    stock: int | None = None
+    image_url: str | None = None
+
+
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
