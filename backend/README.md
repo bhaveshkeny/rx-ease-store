@@ -22,6 +22,7 @@ pip install -r requirements.txt
 ```
 
 Create `.env` from `.env.example` and put your Neon connection string in `DATABASE_URL`.
+Set a long random `API_KEY`; clients must send it as the `X-API-Key` header.
 
 Run:
 
@@ -51,6 +52,7 @@ For a separate React Vercel project, set:
 ```text
 DATABASE_URL=<Neon connection string>
 SECRET_KEY=<strong random secret>
+API_KEY=<long random API key>
 CORS_ORIGINS=https://YOUR-FRONTEND.vercel.app
 AUTO_INIT_DB=true
 ```

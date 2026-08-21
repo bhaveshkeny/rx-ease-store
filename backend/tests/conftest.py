@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT))
 # Must be set before app.database is imported (it builds the URL at import time).
 os.environ.setdefault("SNOWFLAKE_URL", "sqlite+pysqlite:///:memory:")
 os.environ.setdefault("SECRET_KEY", "test-secret")
+os.environ.setdefault("API_KEY", "test-api-key")
 
 from app import database  # noqa: E402
 
@@ -72,7 +73,7 @@ def client(db, tmp_path, monkeypatch):
     from app.routers import orders as orders_router
 
     monkeypatch.setattr(orders_router, "UPLOAD_DIR", tmp_path / "prescriptions")
-    with TestClient(app) as c:  # runs startup: create_all + seed_medicines
+    with TestClient(app, headers={"X-API-Key": "test-api-key"}) as c:  # runs startup: create_all + seed_medicines
         yield c
 
 
