@@ -54,6 +54,19 @@ The backend application MUST remain inside:
 
 Do not change this architecture unless explicitly requested by the user.
 
+## SUPABASE IS NOT USED
+
+This project uses the FastAPI backend for its API, authentication, and database integration.
+
+Do NOT create:
+
+```text
+/supabase
+/src/integrations/supabase
+```
+
+Do not add Supabase clients, middleware, configuration, migrations, or environment variables. Reuse the existing frontend API client and FastAPI backend instead.
+
 ---
 
 # 2. FRONTEND RULES
