@@ -21,6 +21,18 @@ export type Medicine = {
   image_url: string | null;
 };
 
+export type MedicineInput = {
+  name: string;
+  brand: string | null;
+  category: string;
+  description: string | null;
+  price: number;
+  pack_size: string | null;
+  requires_prescription: boolean;
+  stock: number;
+  image_url: string | null;
+};
+
 export type OrderItem = {
   id: string;
   medicine_id: string | null;
@@ -75,7 +87,23 @@ export const apiClient = {
       const { data } = await api.get<Medicine[]>("/api/medicines");
       return data;
     },
+    async get(id: string) {
+      const { data } = await api.get<Medicine>(`/api/medicines/${id}`);
+      return data;
+    },
+    async create(payload: MedicineInput) {
+      const { data } = await api.post<Medicine>("/api/medicines", payload);
+      return data;
+    },
+    async update(id: string, payload: Partial<MedicineInput>) {
+      const { data } = await api.put<Medicine>(`/api/medicines/${id}`, payload);
+      return data;
+    },
+    async remove(id: string) {
+      await api.delete(`/api/medicines/${id}`);
+    },
   },
+
   orders: {
     async list() {
       const { data } = await api.get<Order[]>("/api/orders");

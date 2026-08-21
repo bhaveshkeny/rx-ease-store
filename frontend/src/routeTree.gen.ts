@@ -17,6 +17,7 @@ import { Route as PrescriptionsRouteImport } from './routes/prescriptions'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as AuthenticatedCheckoutRouteImport } from './routes/_authenticated/checkout'
+import { Route as AuthenticatedMedicinesRouteImport } from './routes/_authenticated/medicines'
 import { Route as AuthenticatedOrdersRouteImport } from './routes/_authenticated/orders'
 
 const IndexRoute = IndexRouteImport.update({
@@ -58,6 +59,11 @@ const AuthenticatedCheckoutRoute = AuthenticatedCheckoutRouteImport.update({
   path: '/checkout',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedMedicinesRoute = AuthenticatedMedicinesRouteImport.update({
+  id: '/medicines',
+  path: '/medicines',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedOrdersRoute = AuthenticatedOrdersRouteImport.update({
   id: '/orders',
   path: '/orders',
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/shop': typeof ShopRoute
   '/support': typeof SupportRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/medicines': typeof AuthenticatedMedicinesRoute
   '/orders': typeof AuthenticatedOrdersRoute
 }
 export interface FileRoutesByTo {
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/shop': typeof ShopRoute
   '/support': typeof SupportRoute
   '/checkout': typeof AuthenticatedCheckoutRoute
+  '/medicines': typeof AuthenticatedMedicinesRoute
   '/orders': typeof AuthenticatedOrdersRoute
 }
 export interface FileRoutesById {
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/shop': typeof ShopRoute
   '/support': typeof SupportRoute
   '/_authenticated/checkout': typeof AuthenticatedCheckoutRoute
+  '/_authenticated/medicines': typeof AuthenticatedMedicinesRoute
   '/_authenticated/orders': typeof AuthenticatedOrdersRoute
 }
 export interface FileRouteTypes {
@@ -106,6 +115,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/support'
     | '/checkout'
+    | '/medicines'
     | '/orders'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/support'
     | '/checkout'
+    | '/medicines'
     | '/orders'
   id:
     | '__root__'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/support'
     | '/_authenticated/checkout'
+    | '/_authenticated/medicines'
     | '/_authenticated/orders'
   fileRoutesById: FileRoutesById
 }
@@ -198,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCheckoutRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/medicines': {
+      id: '/_authenticated/medicines'
+      path: '/medicines'
+      fullPath: '/medicines'
+      preLoaderRoute: typeof AuthenticatedMedicinesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/orders': {
       id: '/_authenticated/orders'
       path: '/orders'
@@ -210,11 +229,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedCheckoutRoute: typeof AuthenticatedCheckoutRoute
+  AuthenticatedMedicinesRoute: typeof AuthenticatedMedicinesRoute
   AuthenticatedOrdersRoute: typeof AuthenticatedOrdersRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedCheckoutRoute: AuthenticatedCheckoutRoute,
+  AuthenticatedMedicinesRoute: AuthenticatedMedicinesRoute,
   AuthenticatedOrdersRoute: AuthenticatedOrdersRoute,
 }
 

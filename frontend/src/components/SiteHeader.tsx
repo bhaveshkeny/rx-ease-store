@@ -12,6 +12,7 @@ const links = [
   { to: "/prescriptions", label: "Prescriptions" },
   { to: "/orders", label: "My orders" },
    { to: "/support", label: "Customer Support" },
+  { to: "/medicines", label: "Manage Medicines" },
 ] as const;
 
 export function SiteHeader() {
