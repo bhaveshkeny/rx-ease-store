@@ -49,8 +49,11 @@ function PrescriptionsPage() {
   const { user } = useAuth();
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-12">
-      <h1 className="text-3xl font-semibold">Prescription dispensing</h1>
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <header className="mb-8">
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Rx Center</p>
+        <h1 className="mt-2 text-3xl font-semibold tracking-tight">Prescription dispensing</h1>
+      </header>
       <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
         Prescription-only medicines are dispensed after a registered pharmacist verifies your
         prescription. Uploads are stored privately and are only visible to you and our dispensing
@@ -59,7 +62,7 @@ function PrescriptionsPage() {
 
       <div className="mt-8 grid gap-4 sm:grid-cols-2">
         {steps.map((step) => (
-          <div key={step.title} className="rounded-2xl border border-border bg-card p-5 card-lift">
+          <div key={step.title} className="rounded-xl border border-border bg-card p-5 card-lift">
             <step.icon className="size-6 text-primary" />
             <h2 className="mt-3 text-sm font-semibold">{step.title}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{step.text}</p>
@@ -67,7 +70,7 @@ function PrescriptionsPage() {
         ))}
       </div>
 
-      <div className="mt-10 rounded-2xl border border-border bg-card p-6">
+      <div className="mt-10 rounded-xl border border-border bg-card p-6 shadow-card">
         <h2 className="text-lg font-semibold">Ready to order?</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           {user

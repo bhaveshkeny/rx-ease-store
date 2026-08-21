@@ -3,11 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import { Clock, FileCheck2, ShieldCheck, Truck } from "lucide-react";
 import heroImage from "@/assets/pharmacy-hero.jpg";
 import { MedicineCard } from "@/components/MedicineCard";
+import { MedicineGridSkeleton } from "@/components/skeletons";
 import { Button } from "@/components/ui/button";
 import { medicinesQuery } from "@/lib/medicines";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.prefetchQuery(medicinesQuery),
+  // Start the fetch but don't make the router wait for it — same fix as
+  // /shop. The hero and perks render immediately either way; only the
+  // "Popular right now" grid depends on this and already shimmers.
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(medicinesQuery);
+  },
   head: () => ({
     meta: [
       { title: "MediCare Pharmacy — Prescription & OTC Medicines Online" },
@@ -36,10 +42,6 @@ const perks = [
 
 function HomePage() {
   const { data: medicines = [], isLoading, error } = useQuery(medicinesQuery);
-
-  if (isLoading) {
-    return <div className="mx-auto max-w-6xl px-4 py-20 text-center text-muted-foreground">Loading medicines...</div>;
-  }
 
   if (error) {
     return (
@@ -114,11 +116,17 @@ function HomePage() {
             <Link to="/shop">View all</Link>
           </Button>
         </div>
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {featured.map((medicine) => (
-            <MedicineCard key={medicine.id} medicine={medicine} />
-          ))}
-        </div>
+        {isLoading ? (
+          <div className="mt-6">
+            <MedicineGridSkeleton count={6} />
+          </div>
+        ) : (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((medicine) => (
+              <MedicineCard key={medicine.id} medicine={medicine} />
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

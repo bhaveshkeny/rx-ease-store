@@ -37,10 +37,9 @@ export const useAuthStore = create<AuthState>()(
         set({ token: access_token, user, loading: false });
       },
       signUp: async (payload) => {
-        const { access_token } = await apiClient.auth.register(payload);
-        window.localStorage.setItem("rxease.access_token", access_token);
-        const user = await apiClient.auth.me();
-        set({ token: access_token, user, loading: false });
+        // Register only — do NOT log the new user in automatically.
+        // They should land back on the sign-in tab and log in explicitly.
+        await apiClient.auth.register(payload);
       },
       signOut: () => {
         window.localStorage.removeItem("rxease.access_token");

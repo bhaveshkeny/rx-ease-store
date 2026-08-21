@@ -1,18 +1,21 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { Menu, Pill, ShoppingCart, User } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useCart } from "@/lib/cart";
 import { useAuth } from "@/hooks/useAuth";
 
-const links = [
+const baseLinks = [
   { to: "/", label: "Home" },
-  { to: "/shop", label: "Shop" },
-  { to: "/prescriptions", label: "Prescriptions" },
-  { to: "/orders", label: "My orders" },
-   { to: "/support", label: "Customer Support" },
+  { to: "/shop", label: "Medicines" },
+  { to: "/prescriptions", label: "Rx Center" },
+  { to: "/orders", label: "My Orders" },
+  { to: "/support", label: "Support" },
 ] as const;
+
+const inventoryLink = { to: "/medicines", label: "Inventory" } as const;
 
 export function SiteHeader() {
   const { count } = useCart();
@@ -22,11 +25,18 @@ export function SiteHeader() {
     user?.full_name?.trim() || user?.email?.split("@")[0] || "My account";
   const userInitial = displayName.charAt(0).toUpperCase();
 
+  // Inventory is pharmacist-only — hide it from the nav entirely for everyone else.
+  const links = useMemo(
+    () => (user?.is_pharmacist ? [...baseLinks, inventoryLink] : baseLinks),
+    [user?.is_pharmacist],
+  );
+
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
+    toast.success("Logged out successfully");
     navigate({ to: "/" });
   };
 

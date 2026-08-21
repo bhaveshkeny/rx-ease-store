@@ -21,6 +21,18 @@ export type Medicine = {
   image_url: string | null;
 };
 
+export type MedicineInput = {
+  name: string;
+  brand: string | null;
+  category: string;
+  description: string | null;
+  price: number;
+  pack_size: string | null;
+  requires_prescription: boolean;
+  stock: number;
+  image_url: string | null;
+};
+
 export type OrderItem = {
   id: string;
   medicine_id: string | null;
@@ -46,6 +58,8 @@ const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  const apiKey = import.meta.env["VITE_API_KEY"];
+  if (apiKey) config.headers["X-API-Key"] = apiKey;
   const token =
     typeof window !== "undefined" ? window.localStorage.getItem("rxease.access_token") : null;
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -75,7 +89,23 @@ export const apiClient = {
       const { data } = await api.get<Medicine[]>("/api/medicines");
       return data;
     },
+    async get(id: string) {
+      const { data } = await api.get<Medicine>(`/api/medicines/${id}`);
+      return data;
+    },
+    async create(payload: MedicineInput) {
+      const { data } = await api.post<Medicine>("/api/medicines", payload);
+      return data;
+    },
+    async update(id: string, payload: Partial<MedicineInput>) {
+      const { data } = await api.put<Medicine>(`/api/medicines/${id}`, payload);
+      return data;
+    },
+    async remove(id: string) {
+      await api.delete(`/api/medicines/${id}`);
+    },
   },
+
   orders: {
     async list() {
       const { data } = await api.get<Order[]>("/api/orders");
@@ -97,7 +127,24 @@ export const apiClient = {
       return data;
     },
   },
+  support: {
+    async chat(message: string) {
+      const { data } = await api.post<{ reply: string; needs_human: boolean }>(
+        "/api/support/chat",
+        { message },
+      );
+      return data;
+    },
+    async handoff(message: string, transcript: string) {
+      const { data } = await api.post<{ id: string; message: string; status: string }>(
+        "/api/support/handoff",
+        { message, transcript },
+      );
+      return data;
+    },
+  },
 };
+
 
 export function apiErrorMessage(error: unknown) {
   if (axios.isAxiosError(error)) {

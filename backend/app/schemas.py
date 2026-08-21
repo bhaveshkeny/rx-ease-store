@@ -37,6 +37,20 @@ class MedicineCreate(BaseModel):
     image_url: str | None = None
 
 
+class MedicineUpdate(BaseModel):
+    name: str | None = None
+    brand: str | None = None
+    category: str | None = None
+    description: str | None = None
+    price: float | None = None
+    pack_size: str | None = None
+    requires_prescription: bool | None = None
+    stock: int | None = None
+    image_url: str | None = None
+
+
+
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
@@ -98,3 +112,26 @@ class OrderOut(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
     status: str
+
+
+class SupportChatIn(BaseModel):
+    message: str
+
+
+class SupportChatOut(BaseModel):
+    reply: str
+    needs_human: bool = False
+
+
+class SupportHandoffIn(BaseModel):
+    message: str
+    transcript: str | None = None
+
+
+class SupportTicketOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: str
+    message: str
+    status: str
+    created_at: datetime
