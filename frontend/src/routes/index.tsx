@@ -8,7 +8,12 @@ import { Button } from "@/components/ui/button";
 import { medicinesQuery } from "@/lib/medicines";
 
 export const Route = createFileRoute("/")({
-  loader: ({ context }) => context.queryClient.prefetchQuery(medicinesQuery),
+  // Start the fetch but don't make the router wait for it — same fix as
+  // /shop. The hero and perks render immediately either way; only the
+  // "Popular right now" grid depends on this and already shimmers.
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(medicinesQuery);
+  },
   head: () => ({
     meta: [
       { title: "MediCare Pharmacy — Prescription & OTC Medicines Online" },

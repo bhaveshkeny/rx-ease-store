@@ -8,7 +8,12 @@ import { Input } from "@/components/ui/input";
 import { medicinesQuery } from "@/lib/medicines";
 
 export const Route = createFileRoute("/shop")({
-  loader: ({ context }) => context.queryClient.prefetchQuery(medicinesQuery),
+  // Start the fetch but don't make the router wait for it — this is what
+  // was blocking navigation. The component's own isLoading state (already
+  // wired to the shimmer below) takes over the instant it mounts.
+  loader: ({ context }) => {
+    void context.queryClient.prefetchQuery(medicinesQuery);
+  },
   head: () => ({
     meta: [
       { title: "Shop Medicines — RxEase Pharmacy" },

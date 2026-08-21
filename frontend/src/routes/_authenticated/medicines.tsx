@@ -261,15 +261,6 @@ function ManageMedicinesPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="image_url">Image URL</Label>
-                <Input
-                  id="image_url"
-                  value={form.image_url ?? ""}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                />
-              </div>
-
-              <div className="space-y-1.5">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
                   id="description"
