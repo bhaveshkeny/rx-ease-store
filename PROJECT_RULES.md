@@ -626,6 +626,7 @@ After changes, verify as appropriate:
 - React errors
 - Routing
 - API integration
+- Loading/shimmer states for any new async data fetch
 - Responsive behavior
 - Build
 
@@ -674,6 +675,7 @@ Check:
 [ ] Dependencies were not unnecessarily changed
 [ ] Frontend remains inside /frontend
 [ ] Backend remains inside /backend
+[ ] Shimmer/skeleton loading state added for any new data-fetching UI
 ```
 
 ---
@@ -707,3 +709,34 @@ The frontend must remain inside `/frontend`.
 The backend must remain inside `/backend`.
 
 Preserve this architecture at all times.
+
+---
+
+# 31. LOADING STATE (SHIMMER) RULES
+
+Every page or component that fetches data asynchronously — via `useQuery`, a route `loader`, or any direct API call — MUST render a shimmer/skeleton placeholder while that data is loading. A plain "Loading..." text block or a bare spinner covering page content is not acceptable for new work.
+
+## Required pattern
+
+Shared skeleton primitives live in:
+
+```text
+/frontend/src/components/skeletons.tsx
+```
+
+Before building a loading state:
+
+1. Check `skeletons.tsx` for an existing skeleton that fits (e.g. `MedicineCardSkeleton`, `StatCardSkeleton`, `CategoryFilterSkeleton`, `OrderCardSkeleton`, `TableRowSkeleton`).
+2. Reuse it if it matches, or matches closely enough with props (e.g. `count`).
+3. If nothing fits, add a new skeleton component to `skeletons.tsx` — do not define one-off skeletons inline inside a route file.
+4. Build new skeletons using the existing `Skeleton` primitive from `/frontend/src/components/ui/skeleton.tsx`, not raw `div`s with hand-rolled `animate-pulse` classes.
+
+## Shape rules
+
+- The skeleton must mirror the real content's layout: same spacing, same element sizes, same grid/flex structure, so there is no layout shift when data arrives.
+- Skeleton only the section that actually depends on the fetch. Static content (headers, nav, hero sections, forms not tied to the fetch) must render immediately — do not gate the whole page behind one `isLoading` check if only part of it needs data.
+- Spinners (`Loader2`, `animate-spin`) are reserved for inline/button action states (e.g. a submit button mid-request), not for page or section loading states.
+
+## New features
+
+Any new feature that introduces a data fetch — whether built by a developer, Lovable, GitHub Copilot, or another AI coding tool — must ship its shimmer/skeleton state as part of the initial implementation, not as a follow-up task. This applies equally to new pages, new sections on existing pages, and new components that fetch their own data.
