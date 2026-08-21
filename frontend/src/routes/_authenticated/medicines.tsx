@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Loader2, Pencil, Plus, ShieldAlert, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/table";
 import { apiClient, apiErrorMessage, type Medicine, type MedicineInput } from "@/lib/api";
 import { currency } from "@/lib/cart";
+import { useAuth } from "@/hooks/useAuth";
+import { TableRowSkeleton } from "@/components/skeletons";
 
 export const Route = createFileRoute("/_authenticated/medicines")({
   head: () => ({
@@ -53,6 +55,8 @@ const emptyForm: MedicineInput = {
   image_url: "",
 };
 
+const PAGE_SIZE = 8;
+
 function toForm(medicine: Medicine): MedicineInput {
   return {
     name: medicine.name,
@@ -82,6 +86,9 @@ function normalise(form: MedicineInput): MedicineInput {
 }
 
 function ManageMedicinesPage() {
+  const { user } = useAuth();
+  const isPharmacist = Boolean(user?.is_pharmacist);
+
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<MedicineInput>(emptyForm);
@@ -89,7 +96,23 @@ function ManageMedicinesPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["medicines"],
     queryFn: apiClient.medicines.list,
+    enabled: isPharmacist,
   });
+
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil((data?.length ?? 0) / PAGE_SIZE));
+
+  // Keep the current page in range if the catalogue shrinks (e.g. after a delete)
+  // or grows (e.g. after the query first loads).
+  useEffect(() => {
+    setPage((current) => Math.min(current, totalPages));
+  }, [totalPages]);
+
+  const pagedData = useMemo(() => {
+    if (!data) return [];
+    const start = (page - 1) * PAGE_SIZE;
+    return data.slice(start, start + PAGE_SIZE);
+  }, [data, page]);
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["medicines"] });
 
@@ -131,17 +154,36 @@ function ManageMedicinesPage() {
     saveMutation.mutate(payload);
   };
 
+  if (!isPharmacist) {
+    return (
+      <div className="mx-auto max-w-md px-4 py-24 text-center">
+        <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-destructive/10 text-destructive">
+          <ShieldAlert className="size-7" />
+        </div>
+        <h1 className="mt-4 text-2xl font-semibold tracking-tight">Access restricted</h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          You don't have access to this page. Inventory management is only available to
+          pharmacist accounts.
+        </p>
+        <Button asChild className="mt-6">
+          <Link to="/shop">Back to shop</Link>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-4 py-10">
       <header className="mb-8">
-        <h1 className="font-display text-3xl font-semibold">Manage medicines</h1>
+        <p className="text-sm font-medium uppercase tracking-[0.2em] text-primary">Inventory</p>
+        <h1 className="mt-2 font-display text-3xl font-semibold tracking-tight">Manage medicines</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Pharmacist-only tools to add, update and remove catalogue items.
         </p>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[380px_1fr]">
-        <Card className="h-fit">
+        <Card className="h-fit shadow-card">
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle className="text-lg">
               {editingId ? "Edit medicine" : "Add medicine"}
@@ -262,19 +304,12 @@ function ManageMedicinesPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-card">
           <CardHeader>
             <CardTitle className="text-lg">Catalogue ({data?.length ?? 0})</CardTitle>
           </CardHeader>
           <CardContent>
             {isLoading && (
-              <p className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="size-4 animate-spin" /> Loading catalogue…
-              </p>
-            )}
-            {error && <p className="text-sm text-destructive">{apiErrorMessage(error)}</p>}
-
-            {data && data.length > 0 && (
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -286,54 +321,121 @@ function ManageMedicinesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.map((medicine) => (
-                    <TableRow key={medicine.id}>
-                      <TableCell>
-                        <div className="font-medium">{medicine.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {medicine.brand ?? "—"}
-                          {medicine.requires_prescription && (
-                            <Badge variant="secondary" className="ml-2">
-                              Rx
-                            </Badge>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="text-sm">{medicine.category}</TableCell>
-                      <TableCell className="text-sm">{currency(medicine.price)}</TableCell>
-                      <TableCell className="text-sm">{medicine.stock}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Edit ${medicine.name}`}
-                            onClick={() => {
-                              setEditingId(medicine.id);
-                              setForm(toForm(medicine));
-                            }}
-                          >
-                            <Pencil className="size-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            aria-label={`Delete ${medicine.name}`}
-                            disabled={deleteMutation.isPending}
-                            onClick={() => {
-                              if (window.confirm(`Delete ${medicine.name}?`)) {
-                                deleteMutation.mutate(medicine.id);
-                              }
-                            }}
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <TableRowSkeleton key={i} />
                   ))}
                 </TableBody>
               </Table>
+            )}
+            {error && <p className="text-sm text-destructive">{apiErrorMessage(error)}</p>}
+
+            {data && data.length > 0 && (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Category</TableHead>
+                      <TableHead>Price</TableHead>
+                      <TableHead>Stock</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pagedData.map((medicine) => (
+                      <TableRow key={medicine.id}>
+                        <TableCell>
+                          <div className="font-medium">{medicine.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {medicine.brand ?? "—"}
+                            {medicine.requires_prescription && (
+                              <Badge variant="secondary" className="ml-2">
+                                Rx
+                              </Badge>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm">{medicine.category}</TableCell>
+                        <TableCell className="text-sm">{currency(medicine.price)}</TableCell>
+                        <TableCell className="text-sm">{medicine.stock}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Edit ${medicine.name}`}
+                              onClick={() => {
+                                setEditingId(medicine.id);
+                                setForm(toForm(medicine));
+                              }}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={`Delete ${medicine.name}`}
+                              disabled={deleteMutation.isPending}
+                              onClick={() => {
+                                if (window.confirm(`Delete ${medicine.name}?`)) {
+                                  deleteMutation.mutate(medicine.id);
+                                }
+                              }}
+                            >
+                              <Trash2 className="size-4 text-destructive" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+
+                {totalPages > 1 && (
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border/70 pt-4">
+                    <p className="text-xs text-muted-foreground">
+                      Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, data.length)} of{" "}
+                      {data.length}
+                    </p>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="Previous page"
+                        disabled={page === 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      >
+                        <ChevronLeft className="size-4" />
+                      </Button>
+
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNumber) => (
+                          <Button
+                            key={pageNumber}
+                            variant={pageNumber === page ? "default" : "ghost"}
+                            size="icon"
+                            className="text-sm"
+                            onClick={() => setPage(pageNumber)}
+                            aria-current={pageNumber === page ? "page" : undefined}
+                          >
+                            {pageNumber}
+                          </Button>
+                        ))}
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        aria-label="Next page"
+                        disabled={page === totalPages}
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                      >
+                        <ChevronRight className="size-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {data && data.length === 0 && (

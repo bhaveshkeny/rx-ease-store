@@ -33,8 +33,7 @@ function AuthPage() {
   const navigate = useNavigate();
   const router = useRouter();
   const { user, loading } = useAuth();
-  const [email, setEmail] = useState("");
-  const [pendingConfirm, setPendingConfirm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
 
   useEffect(() => {
     if (!loading && user) navigate({ to: "/orders" });
@@ -58,18 +57,7 @@ function AuthPage() {
       </p>
 
       <div className="mt-8 rounded-2xl border border-border bg-card p-6 card-lift">
-        {pendingConfirm ? (
-          <div className="text-center text-sm">
-            <p className="font-medium">Confirm your email</p>
-            <p className="mt-2 text-muted-foreground">
-              We sent a confirmation link to {email}. Click it to activate your account, then sign in.
-            </p>
-            <Button variant="outline" className="mt-4" onClick={() => setPendingConfirm(false)}>
-              Back to sign in
-            </Button>
-          </div>
-        ) : (
-          <Tabs defaultValue="signin">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as "signin" | "signup")}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="signin">Sign in</TabsTrigger>
               <TabsTrigger value="signup">Create account</TabsTrigger>
@@ -117,7 +105,7 @@ function AuthPage() {
               <Formik
                 initialValues={{ fullName: "", email: "", password: "" }}
                 validationSchema={signUpSchema}
-                onSubmit={async (values, { setSubmitting }) => {
+                onSubmit={async (values, { setSubmitting, resetForm }) => {
                   try {
                     await useAuthStore.getState().signUp({
                       email: values.email,
@@ -125,9 +113,9 @@ function AuthPage() {
                       full_name: values.fullName,
                     });
 
-                    setEmail(values.email);
-                    setPendingConfirm(true);
-                    toast.success("Your account is ready. Welcome to MediCare.");
+                    resetForm();
+                    setActiveTab("signin");
+                    toast.success("Account created successfully! Please sign in.");
                   } catch (error) {
                     toast.error(apiErrorMessage(error));
                   } finally {
@@ -163,7 +151,6 @@ function AuthPage() {
               </Formik>
             </TabsContent>
           </Tabs>
-        )}
       </div>
     </div>
   );
