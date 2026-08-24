@@ -1,6 +1,6 @@
+import type { ReactNode } from "react";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { ReactNode } from "react";
 
 export type CartItem = {
   id: string;
@@ -12,54 +12,236 @@ export type CartItem = {
 };
 
 type CartState = {
-  items: CartItem[];
-  add: (item: Omit<CartItem, "quantity">, quantity?: number) => void;
+  cartsByUser: Record<string, CartItem[]>;
+  guestItems: CartItem[];
+  activeUserId: string | null;
+  setActiveUser: (userId: string | null) => void;
+  add: (
+    item: Omit<CartItem, "quantity">,
+    quantity?: number,
+  ) => void;
   setQuantity: (id: string, quantity: number) => void;
   remove: (id: string) => void;
   clear: () => void;
 };
 
+const EMPTY_CART: CartItem[] = [];
+
+function mergeItems(
+  savedItems: CartItem[],
+  guestItems: CartItem[],
+) {
+  let mergedItems = [...savedItems];
+
+  for (const guestItem of guestItems) {
+    const existing = mergedItems.some(
+      (item) => item.id === guestItem.id,
+    );
+
+    if (existing) {
+      mergedItems = mergedItems.map((item) =>
+        item.id === guestItem.id
+          ? {
+              ...item,
+              quantity: item.quantity + guestItem.quantity,
+            }
+          : item,
+      );
+    } else {
+      mergedItems = [...mergedItems, guestItem];
+    }
+  }
+
+  return mergedItems;
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
-      items: [],
-      add: (item, quantity = 1) =>
+      cartsByUser: {},
+      guestItems: [],
+      activeUserId: null,
+
+      setActiveUser: (userId) => {
         set((state) => {
-          const existing = state.items.find((entry) => entry.id === item.id);
-          if (existing) {
+          if (!userId) {
             return {
-              items: state.items.map((entry) =>
-                entry.id === item.id ? { ...entry, quantity: entry.quantity + quantity } : entry,
-              ),
+              activeUserId: null,
+              guestItems: [],
             };
           }
-          return { items: [...state.items, { ...item, quantity }] };
-        }),
-      setQuantity: (id, quantity) =>
-        set((state) => ({
-          items:
+
+          const savedItems =
+            state.cartsByUser[userId] ?? EMPTY_CART;
+
+          const mergedItems = mergeItems(
+            savedItems,
+            state.guestItems,
+          );
+
+          return {
+            activeUserId: userId,
+            guestItems: [],
+            cartsByUser: {
+              ...state.cartsByUser,
+              [userId]: mergedItems,
+            },
+          };
+        });
+      },
+
+      add: (item, quantity = 1) => {
+        set((state) => {
+          const currentItems = state.activeUserId
+            ? state.cartsByUser[state.activeUserId] ??
+              EMPTY_CART
+            : state.guestItems;
+
+          const existing = currentItems.find(
+            (entry) => entry.id === item.id,
+          );
+
+          const updatedItems = existing
+            ? currentItems.map((entry) =>
+                entry.id === item.id
+                  ? {
+                      ...entry,
+                      quantity: entry.quantity + quantity,
+                    }
+                  : entry,
+              )
+            : [...currentItems, { ...item, quantity }];
+
+          if (!state.activeUserId) {
+            return {
+              guestItems: updatedItems,
+            };
+          }
+
+          return {
+            cartsByUser: {
+              ...state.cartsByUser,
+              [state.activeUserId]: updatedItems,
+            },
+          };
+        });
+      },
+
+      setQuantity: (id, quantity) => {
+        set((state) => {
+          const currentItems = state.activeUserId
+            ? state.cartsByUser[state.activeUserId] ??
+              EMPTY_CART
+            : state.guestItems;
+
+          const updatedItems =
             quantity <= 0
-              ? state.items.filter((entry) => entry.id !== id)
-              : state.items.map((entry) => (entry.id === id ? { ...entry, quantity } : entry)),
-        })),
-      remove: (id) => set((state) => ({ items: state.items.filter((entry) => entry.id !== id) })),
-      clear: () => set({ items: [] }),
+              ? currentItems.filter(
+                  (entry) => entry.id !== id,
+                )
+              : currentItems.map((entry) =>
+                  entry.id === id
+                    ? { ...entry, quantity }
+                    : entry,
+                );
+
+          if (!state.activeUserId) {
+            return {
+              guestItems: updatedItems,
+            };
+          }
+
+          return {
+            cartsByUser: {
+              ...state.cartsByUser,
+              [state.activeUserId]: updatedItems,
+            },
+          };
+        });
+      },
+
+      remove: (id) => {
+        set((state) => {
+          const currentItems = state.activeUserId
+            ? state.cartsByUser[state.activeUserId] ??
+              EMPTY_CART
+            : state.guestItems;
+
+          const updatedItems = currentItems.filter(
+            (entry) => entry.id !== id,
+          );
+
+          if (!state.activeUserId) {
+            return {
+              guestItems: updatedItems,
+            };
+          }
+
+          return {
+            cartsByUser: {
+              ...state.cartsByUser,
+              [state.activeUserId]: updatedItems,
+            },
+          };
+        });
+      },
+
+      clear: () => {
+        set((state) => {
+          if (!state.activeUserId) {
+            return {
+              guestItems: [],
+            };
+          }
+
+          return {
+            cartsByUser: {
+              ...state.cartsByUser,
+              [state.activeUserId]: [],
+            },
+          };
+        });
+      },
     }),
-    { name: "medicare.cart.v1" },
+    {
+      name: "medicare.carts.v2",
+
+      partialize: (state) => ({
+        cartsByUser: state.cartsByUser,
+      }),
+    },
   ),
 );
 
 export function useCart() {
-  const items = useCartStore((state) => state.items);
+  const items = useCartStore((state) =>
+    state.activeUserId
+      ? state.cartsByUser[state.activeUserId] ??
+        EMPTY_CART
+      : state.guestItems,
+  );
+
   const add = useCartStore((state) => state.add);
-  const setQuantity = useCartStore((state) => state.setQuantity);
+  const setQuantity = useCartStore(
+    (state) => state.setQuantity,
+  );
   const remove = useCartStore((state) => state.remove);
   const clear = useCartStore((state) => state.clear);
+
   return {
     items,
-    count: items.reduce((sum, entry) => sum + entry.quantity, 0),
-    subtotal: items.reduce((sum, entry) => sum + entry.quantity * entry.price, 0),
-    needsPrescription: items.some((entry) => entry.requiresPrescription),
+    count: items.reduce(
+      (sum, entry) => sum + entry.quantity,
+      0,
+    ),
+    subtotal: items.reduce(
+      (sum, entry) =>
+        sum + entry.quantity * entry.price,
+      0,
+    ),
+    needsPrescription: items.some(
+      (entry) => entry.requiresPrescription,
+    ),
     add,
     setQuantity,
     remove,
@@ -67,7 +249,14 @@ export function useCart() {
   };
 }
 
-export const CartProvider = ({ children }: { children: ReactNode }) => children;
+export const CartProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => children;
 
 export const currency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
