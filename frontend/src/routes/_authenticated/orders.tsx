@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { FileText } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { OrderListSkeleton } from "@/components/skeletons";
+import { OrderListSkeleton } from "@/components/Skeletons";
 import { currency } from "@/lib/cart";
 import { apiClient } from "@/lib/api";
 

@@ -21,7 +21,7 @@ import {
 import { apiClient, apiErrorMessage, type Medicine, type MedicineInput } from "@/lib/api";
 import { currency } from "@/lib/cart";
 import { useAuth } from "@/hooks/useAuth";
-import { TableRowSkeleton } from "@/components/skeletons";
+import { TableRowSkeleton } from"@/components/Skeletons";
 
 export const Route = createFileRoute("/_authenticated/medicines")({
   head: () => ({
