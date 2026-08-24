@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { currency, useCart } from "@/lib/cart";
 import { apiClient, apiErrorMessage } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/_authenticated/checkout")({
   head: () => ({
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/checkout")({
 function CheckoutPage() {
   const { items, subtotal, needsPrescription, clear } = useCart();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [file, setFile] = useState<File | null>(null);
 
   const delivery = subtotal > 0 && subtotal < 30 ? 3.99 : 0;
@@ -63,7 +65,12 @@ function CheckoutPage() {
       </p>
 
       <Formik
-        initialValues={{ full_name: "", phone: "", address: "" }}
+        enableReinitialize
+initialValues={{
+  full_name: user?.full_name ?? "",
+  phone: user?.phone ?? "",
+  address: "",
+}}
         validationSchema={checkoutSchema}
         onSubmit={async (values, { setSubmitting }) => {
           if (needsPrescription && !file) {
